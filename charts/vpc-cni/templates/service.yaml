@@ -1,0 +1,21 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: vpc-cni-webhook
+  namespace: kube-system
+  labels:
+    app: vpc-cni
+    component: vpc-cni-webhook
+    app: vpc-cni
+spec:
+  ports:
+    - name: webhook-port
+      protocol: TCP
+      port: 443
+      targetPort: webhook-port
+  type: ClusterIP
+  selector:
+    app: vpc-cni
+    component: vpc-cni-webhook
+  sessionAffinity: None
+

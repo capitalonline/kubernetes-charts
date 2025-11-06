@@ -1,0 +1,11 @@
+apiVersion: networks.networking.kubernetes.com/v1
+kind: Network
+metadata:
+  name: underlay-network
+  labels:
+    app: vpc-cni
+spec:
+  type: Underlay
+  nodeSelector:
+    kubernetes.io/os: linux
+

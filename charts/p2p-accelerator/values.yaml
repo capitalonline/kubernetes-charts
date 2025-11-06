@@ -1,0 +1,43 @@
+# Default values for p2p-accelerator.
+# This is a YAML-formatted file.
+# Declare variables to be substituted into your templates.
+
+# ==========================================
+# Component Configuration
+# ==========================================
+# Note: All component configurations are fixed in template files
+
+# Fixed values:
+# - namespace: kube-system
+# - nodeSelector.kubernetes.io/os: linux
+# - priorityClassName: system-node-critical
+# - tolerations: Exists (all taints)
+# - hostPort: 30020 (registry), 30021 (registry service), 30022 (metrics)
+# - resources: {} (no limits)
+# - RBAC: See clusterrole.yaml for full permissions
+
+# ==========================================
+# Container Configuration (Unified Namespace)
+# ==========================================
+container:
+  # P2P Accelerator registry container
+  p2p-accelerator-registry:
+    image:
+      repository: harbor-dev.yun-paas.com/dev/p2p-accelerator
+      pullPolicy: Always
+      tag: "v0.4.0"
+
+  # P2P Accelerator configuration init container
+  p2p-accelerator-configuration:
+    image:
+      repository: harbor-dev.yun-paas.com/dev/p2p-accelerator
+      pullPolicy: Always
+      tag: "v0.4.0"
+
+# ==========================================
+# P2P Accelerator Configuration
+# ==========================================
+# Mirrored registries for P2P acceleration
+mirroredRegistries:
+  - https://aj941n.yun-paas.com
+

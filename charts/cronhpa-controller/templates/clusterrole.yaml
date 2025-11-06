@@ -1,0 +1,77 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: cronhpa-controller-role
+  labels:
+    app: cronhpa-controller
+rules:
+  - apiGroups:
+      - autoscaling.kubernetes.com
+    resources:
+      - cronhorizontalpodautoscalers
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
+      - autoscaling.kubernetes.com
+    resources:
+      - cronhorizontalpodautoscalers/finalizers
+    verbs:
+      - update
+  - apiGroups:
+      - autoscaling.kubernetes.com
+    resources:
+      - cronhorizontalpodautoscalers/status
+    verbs:
+      - get
+      - patch
+      - update
+  - apiGroups:
+      - coordination.k8s.io
+    resources:
+      - leases
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
+      - ""
+    resources:
+      - events
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
+      - apps
+    resources:
+      - deployments/scale
+      - statefulsets/scale
+      - replicasets/scale
+    verbs:
+      - get
+      - update
+      - patch
+  - apiGroups:
+      - autoscaling
+    resources:
+      - horizontalpodautoscalers
+    verbs:
+      - watch
+      - list
+      - get
+      - update
+      - patch

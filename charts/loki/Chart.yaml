@@ -1,0 +1,7 @@
+apiVersion: v2
+name: loki
+description: Loki logging stack including Loki, Promtail, and Kubernetes Event Exporter
+type: application
+version: 1.0.0
+appVersion: "3.2.0"
+

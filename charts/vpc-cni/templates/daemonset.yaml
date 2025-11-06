@@ -1,0 +1,149 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: vpc-cni-daemon
+  namespace: kube-system
+  labels:
+    app.kubernetes.io/app-component: vpc-cni
+    app: vpc-cni
+    component: daemon
+spec:
+  selector:
+    matchLabels:
+      app: vpc-cni
+      component: daemon
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/app-component: vpc-cni
+        app: vpc-cni
+        component: daemon
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: node.kubernetes.io/host-type
+                operator: In
+                values:
+                {{- range .Values.daemon.hostTypes }}
+                - {{ . }}
+                {{- end }}
+      tolerations:
+        - operator: Exists
+        - key: node-role.kubernetes.io/master
+          effect: NoSchedule
+      priorityClassName: {{ .Values.priorityClassName }}
+      serviceAccountName: vpc-cni
+      hostNetwork: true
+      hostPID: true
+      initContainers:
+      - name: install-cni
+        image: {{ index .Values.container "install-cni" "image" "repository" }}:{{ index .Values.container "install-cni" "image" "tag" }}
+        imagePullPolicy: {{ index .Values.container "install-cni" "image" "pullPolicy" }}
+        command: ["/cni/install-cni.sh"]
+        securityContext:
+          runAsUser: 0
+          privileged: true
+        volumeMounts:
+        - mountPath: /etc/cni/net.d
+          name: cni-conf
+        - mountPath: /opt/cni/bin
+          name: cni-bin
+        - mountPath: /cni/00-vpc-cni.conflist
+          name: cni-conf-source
+          subPath: cni-config
+      containers:
+      - name: cni-daemon
+        image: {{ index .Values.container "cni-daemon" "image" "repository" }}:{{ index .Values.container "cni-daemon" "image" "tag" }}
+        imagePullPolicy: {{ index .Values.container "cni-daemon" "image" "pullPolicy" }}
+        command:
+        - sh
+        - /cni/start-daemon.sh
+        args:
+        - --update-ipinstance-status={{ .Values.daemon.updateIPInstanceStatus }}
+        securityContext:
+          runAsUser: 0
+          privileged: true
+        env:
+        - name: DEFAULT_IP_FAMILY
+          value: {{ .Values.cni.defaultIPFamily | quote }}
+        - name: NODE_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        - name: KUBE_NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 11021
+            scheme: HTTP
+          initialDelaySeconds: 30
+          periodSeconds: 20
+          successThreshold: 1
+          timeoutSeconds: 5
+          failureThreshold: 5
+        readinessProbe:
+          httpGet:
+            path: /readyz
+            port: 11021
+            scheme: HTTP
+          initialDelaySeconds: 30
+          periodSeconds: 20
+          successThreshold: 1
+          timeoutSeconds: 5
+          failureThreshold: 5
+        {{- with .Values.daemon.resources }}
+        resources:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+        volumeMounts:
+        - mountPath: /run/cni
+          name: host-run-cni
+        - mountPath: /lib/modules
+          name: host-modules
+        - mountPath: /run/xtables.lock
+          name: xtables-lock
+        - mountPath: /var/run/netns
+          name: host-netns-dir
+          mountPropagation: Bidirectional
+        - mountPath: /var/lib/kubelet/device-plugins
+          name: device-plugin-path
+        securityContext:
+          privileged: true
+          runAsUser: 0
+      volumes:
+      - name: host-modules
+        hostPath:
+          path: /lib/modules
+      - name: host-run-cni
+        hostPath:
+          path: /run/cni
+      - name: cni-conf
+        hostPath:
+          path: /etc/cni/net.d
+      - name: cni-bin
+        hostPath:
+          path: /opt/cni/bin
+      - name: xtables-lock
+        hostPath:
+          path: /run/xtables.lock
+          type: FileOrCreate
+      - name: cni-conf-source
+        configMap:
+          name: vpc-cni-conf
+          items:
+            - key: cni-config
+              path: cni-config
+      - name: host-netns-dir
+        hostPath:
+          path: /var/run/netns
+      - name: device-plugin-path
+        hostPath:
+          path: /var/lib/kubelet/device-plugins
+          type: "Directory"
+

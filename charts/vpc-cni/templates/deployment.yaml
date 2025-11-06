@@ -1,0 +1,173 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vpc-cni-manager
+  namespace: kube-system
+  labels:
+    app.kubernetes.io/app-component: vpc-cni
+    app: vpc-cni
+    component: vpc-cni-manager
+spec:
+  replicas: {{ .Values.manager.replicaCount }}
+  selector:
+    matchLabels:
+      app: vpc-cni
+      component: vpc-cni-manager
+  strategy:
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 1
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/app-component: vpc-cni
+        app: vpc-cni
+        component: vpc-cni-manager
+    spec:
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchLabels:
+                  app: vpc-cni
+                  component: vpc-cni-manager
+              topologyKey: kubernetes.io/hostname
+      priorityClassName: {{ .Values.priorityClassName }}
+      serviceAccountName: vpc-cni
+      hostNetwork: true
+      containers:
+      - name: cni-manager
+        image: {{ index .Values.container "cni-manager" "image" "repository" }}:{{ index .Values.container "cni-manager" "image" "tag" }}
+        imagePullPolicy: {{ index .Values.container "cni-manager" "image" "pullPolicy" }}
+        ports:
+        - name: http-metrics
+          containerPort: 9898
+          protocol: TCP
+        command:
+        - /cni/vpc-cni-manager
+        - --kube-client-qps={{ .Values.manager.kubeClientQPS }}
+        - --kube-client-burst={{ .Values.manager.kubeClientBurst }}
+        - --controller-concurrency={{ .Values.manager.controllerConcurrency }}
+        env:
+        - name: DEFAULT_NETWORK_TYPE
+          value: {{ .Values.cni.defaultNetworkType | quote }}
+        - name: DEFAULT_IP_FAMILY
+          value: {{ .Values.cni.defaultIPFamily | quote }}
+        - name: NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: CDS_ACCESS_KEY_ID
+          valueFrom:
+            secretKeyRef:
+              key: access_key_id
+              name: eks-secrets
+        - name: CDS_ACCESS_KEY_SECRET
+          valueFrom:
+            secretKeyRef:
+              key: access_key_secret
+              name: eks-secrets
+        - name: CDS_API_SCHEMA
+          valueFrom:
+            configMapKeyRef:
+              key: openapi_schema
+              name: cds-properties
+        - name: CDS_API_HOST
+          valueFrom:
+            configMapKeyRef:
+              key: openapi_host
+              name: cds-properties
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 11023
+            scheme: HTTP
+          initialDelaySeconds: 30
+          periodSeconds: 20
+          successThreshold: 1
+          timeoutSeconds: 5
+          failureThreshold: 5
+        readinessProbe:
+          httpGet:
+            path: /readyz
+            port: 11023
+            scheme: HTTP
+          initialDelaySeconds: 30
+          periodSeconds: 20
+          successThreshold: 1
+          timeoutSeconds: 5
+          failureThreshold: 5
+        {{- with .Values.manager.resources }}
+        resources:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+      tolerations:
+      {{- toYaml .Values.tolerations | nindent 6 }}
+      nodeSelector:
+      {{- toYaml .Values.nodeSelector | nindent 8 }}
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vpc-cni-webhook
+  namespace: kube-system
+  labels:
+    app.kubernetes.io/app-component: vpc-cni
+    app: vpc-cni
+    component: vpc-cni-webhook
+spec:
+  replicas: {{ .Values.webhook.replicaCount }}
+  selector:
+    matchLabels:
+      app: vpc-cni
+      component: vpc-cni-webhook
+  strategy:
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 1
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/app-component: vpc-cni
+        app: vpc-cni
+        component: vpc-cni-webhook
+        webhook.vpc-cni.io/ignore: "true"
+    spec:
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchLabels:
+                  app: vpc-cni
+                  component: vpc-cni-webhook
+              topologyKey: kubernetes.io/hostname
+      priorityClassName: {{ .Values.priorityClassName }}
+      serviceAccountName: vpc-cni
+      hostNetwork: true
+      containers:
+      - name: vpc-cni-webhook
+        image: {{ index .Values.container "vpc-cni-webhook" "image" "repository" }}:{{ index .Values.container "vpc-cni-webhook" "image" "tag" }}
+        imagePullPolicy: {{ index .Values.container "vpc-cni-webhook" "image" "pullPolicy" }}
+        command:
+        - /cni/vpc-cni-webhook
+        - --default-ip-retain={{ .Values.cni.defaultIPRetain }}
+        args:
+        - --port={{ .Values.webhook.port }}
+        env:
+        - name: DEFAULT_NETWORK_TYPE
+          value: {{ .Values.cni.defaultNetworkType | quote }}
+        - name: DEFAULT_IP_FAMILY
+          value: {{ .Values.cni.defaultIPFamily | quote }}
+        ports:
+        - containerPort: {{ .Values.webhook.port }}
+          name: webhook-port
+        {{- with .Values.webhook.resources }}
+        resources:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+      tolerations:
+      {{- toYaml .Values.tolerations | nindent 6 }}
+      nodeSelector:
+      {{- toYaml .Values.nodeSelector | nindent 8 }}
+

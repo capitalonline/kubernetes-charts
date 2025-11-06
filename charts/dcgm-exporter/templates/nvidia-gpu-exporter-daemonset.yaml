@@ -1,0 +1,103 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  labels:
+    app.kubernetes.io/app-component: dcgm-exporter
+    app: nvidia-gpu-exporter
+  name: nvidia-gpu-exporter
+  namespace: monitoring
+spec:
+  selector:
+    matchLabels:
+      app: nvidia-gpu-exporter
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/app-component: dcgm-exporter
+        app: nvidia-gpu-exporter
+    spec:
+      containers:
+      - name: dcgm-exporter
+        image: {{ index .Values.container "dcgm-exporter" "image" "repository" }}:{{ index .Values.container "dcgm-exporter" "image" "tag" }}
+        env:
+        - name: "DCGM_EXPORTER_LISTEN"
+          value: ":9400"
+        - name: "DCGM_EXPORTER_KUBERNETES"
+          value: "true"
+        resources:
+          limits:
+            cpu: 250m
+            memory: 1024Mi
+          requests:
+            cpu: 100m
+            memory: 200Mi
+        securityContext:
+          privileged: true
+          runAsNonRoot: false
+          runAsUser: 0
+        volumeMounts:
+          - name: "pod-gpu-resources"
+            readOnly: true
+            mountPath: "/var/lib/kubelet/pod-resources"
+          - mountPath: /var/run/nvidia-exporter
+            name: nvidia-exporter
+            readOnly: true
+      - name: kube-rbac-proxy
+        args:
+        - --secure-listen-address=[$(IP)]:9401
+        - --tls-cipher-suites=TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305
+        - --upstream=http://127.0.0.1:9400/
+        env:
+        - name: IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        image: {{ index .Values.container "kube-rbac-proxy" "image" "repository" }}:{{ index .Values.container "kube-rbac-proxy" "image" "tag" }}
+        ports:
+        - containerPort: 9401
+          hostPort: 9401
+          name: https
+        resources:
+          limits:
+            cpu: 20m
+            memory: 40Mi
+          requests:
+            cpu: 10m
+            memory: 20Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - ALL
+          readOnlyRootFilesystem: true
+          runAsGroup: 65532
+          runAsNonRoot: true
+          runAsUser: 65532
+      hostNetwork: true
+      hostPID: true
+      nodeSelector:
+        kubernetes.io/os: linux
+        node.kubernetes.io/gpu-type: NVIDIA
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+      serviceAccountName: nvidia-gpu-exporter
+      tolerations:
+      - operator: Exists
+      volumes:
+      - hostPath:
+          path: /proc
+        name: proc
+      - hostPath:
+          path: /sys
+        name: sys
+      - hostPath:
+          path: /
+        name: root
+      - hostPath:
+          path: "/var/lib/kubelet/pod-resources"
+        name: "pod-gpu-resources"
+      - hostPath:
+          path: /var/run/nvidia-exporter
+          type: DirectoryOrCreate
+        name: nvidia-exporter

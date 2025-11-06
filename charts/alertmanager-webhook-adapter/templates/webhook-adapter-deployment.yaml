@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: alertmanager-webhook-adapter
+  namespace: monitoring
+  labels:
+    app.kubernetes.io/app-component: alertmanager-webhook-adapter
+    app: alertmanager-webhook-adapter
+    app.kubernetes.io/name: webhook-adapter
+    app.kubernetes.io/component: webhook
+spec:
+  replicas: {{ .Values.webhookAdapter.replicas }}
+  selector:
+    matchLabels:
+      app: alertmanager-webhook-adapter
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/app-component: alertmanager-webhook-adapter
+        app: alertmanager-webhook-adapter
+        app.kubernetes.io/name: webhook-adapter
+        app.kubernetes.io/component: webhook
+    spec:
+      nodeSelector:
+        {{- toYaml .Values.webhookAdapter.nodeSelector | nindent 8 }}
+      tolerations:
+        {{- toYaml .Values.webhookAdapter.tolerations | nindent 8 }}
+      containers:
+        - name: webhook
+          image: {{ .Values.container.webhook.image.repository }}:{{ .Values.container.webhook.image.tag }}
+          command:
+            - /alertmanager-webhook-adapter
+            - --listen-address={{ .Values.webhookAdapter.listenAddress }}
+            - --signature={{ .Values.webhookAdapter.signature }}
+          env:
+            - name: TZ
+              value: Asia/Shanghai
+          ports:
+            - name: http
+              containerPort: 8090
+              protocol: TCP
+          resources:
+            {{- toYaml .Values.webhookAdapter.resources | nindent 12 }}
+      restartPolicy: Always
+

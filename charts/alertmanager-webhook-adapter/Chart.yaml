@@ -1,0 +1,7 @@
+apiVersion: v2
+name: alertmanager-webhook-adapter
+description: Alertmanager Webhook Adapter
+type: application
+version: 1.0.0
+appVersion: "1.1.7"
+

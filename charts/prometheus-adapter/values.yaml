@@ -1,0 +1,22 @@
+# ==========================================
+# Component Configuration
+# ==========================================
+prometheusAdapter:
+  # Whether to create system:aggregated-metrics-reader ClusterRole
+  # Set to false if the resource already exists in the cluster (default: not created to avoid conflicts)
+  createAggregatedMetricsReader: false
+  
+  # Namespace configuration (leave empty to use Helm's -n parameter)
+  # Note: Usually no need to set this, recommend using helm install -n <namespace> to specify
+  namespace: monitoring
+
+# ==========================================
+# Container Configuration (Unified Namespace)
+# ==========================================
+container:
+  # Prometheus Adapter main container
+  prometheus-adapter:
+    image:
+      repository: registry-bj.capitalonline.net/eks/prometheus-adapter
+      tag: v0.11.1
+

@@ -1,0 +1,16 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: p2p-accelerator
+  labels:
+    app.kubernetes.io/name: p2p-accelerator
+    app.kubernetes.io/component: p2p-accelerator
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: p2p-accelerator
+subjects:
+  - kind: ServiceAccount
+    name: p2p-accelerator
+    namespace: kube-system
+

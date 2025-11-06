@@ -1,0 +1,27 @@
+# Default values for cronhpa-controller.
+# This is a YAML-formatted file.
+# Declare variables to be substituted into your templates.
+
+# ==========================================
+# Component Configuration
+# ==========================================
+# Note: All component configurations are fixed in template files
+
+# Fixed values:
+# - namespace: kube-system
+# - replicas: 3
+# - serviceAccount: cronhpa-controller
+# - env.TZ: Asia/Shanghai
+# - resources: {} (no limits)
+# - RBAC: See clusterrole.yaml for full permissions
+
+# ==========================================
+# Container Configuration (Unified Namespace)
+# ==========================================
+container:
+  # CronHPA Controller main container
+  cronhpa-controller:
+    image:
+      repository: harbor-dev.yun-paas.com/dev/kubernetes-cronhpa-controller
+      pullPolicy: Always
+      tag: "v1.0.0"

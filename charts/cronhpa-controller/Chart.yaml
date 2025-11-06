@@ -1,0 +1,16 @@
+apiVersion: v2
+name: cronhpa-controller
+description: A Helm chart for CronHPA Controller
+type: application
+version: 0.1.0
+appVersion: "v1.0.0"
+keywords:
+  - kubernetes
+  - autoscaling
+  - cronjob
+  - hpa
+home: https://github.com/cronhpa-controller/cronhpa-controller
+maintainers:
+  - name: cronhpa-controller
+sources:
+  - https://github.com/cronhpa-controller/cronhpa-controller

@@ -1,0 +1,72 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: loki
+  namespace: monitoring
+  labels:
+    app.kubernetes.io/app-component: loki
+    app: loki
+spec:
+  podManagementPolicy: OrderedReady
+  replicas: 1
+  selector:
+    matchLabels:
+      app: loki
+  serviceName: loki-svc
+  updateStrategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/app-component: loki
+        app: loki
+    spec:
+      nodeSelector:
+        kubernetes.io/loki: ""
+      tolerations:
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
+        - key: node-role.eks.net/infra
+          operator: Exists
+          effect: NoSchedule
+      securityContext:
+        runAsUser: 0
+        runAsGroup: 0
+        fsGroup: 0
+      serviceAccountName: loki
+      containers:
+        - name: loki
+          image: {{ .Values.container.loki.image.repository }}:{{ .Values.container.loki.image.tag }}
+          imagePullPolicy: IfNotPresent
+          args:
+            - -config.file=/etc/loki/loki.yaml
+          volumeMounts:
+            - name: config
+              mountPath: /etc/loki
+            - name: loki-pvc
+              mountPath: /loki
+              readOnly: false
+          ports:
+            - name: http-metrics
+              containerPort: 3100
+              protocol: TCP
+          securityContext:
+            runAsUser: 0
+            runAsGroup: 0
+      volumes:
+        - name: config
+          configMap:
+            name: loki-config
+  volumeClaimTemplates:
+    - apiVersion: v1
+      kind: PersistentVolumeClaim
+      metadata:
+        name: loki-pvc
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        storageClassName: {{ .Values.loki.storage.storageClassName }}
+        resources:
+          requests:
+            storage: {{ .Values.loki.storage.size }}

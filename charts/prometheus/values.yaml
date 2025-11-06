@@ -1,0 +1,83 @@
+# ==========================================
+# Component Configuration
+# ==========================================
+prometheus:
+  retention: 15d
+  storage:
+    storageClassName: default-local-sc
+    size: 30Gi
+  
+  # HTTP Basic Authentication Configuration
+  auth:
+    enabled: true  # Set to false to skip Secret creation
+    # Authentication info in htpasswd format (username:password hash)
+    # Format: username:$apr1$hash...
+    # Multiple users separated by newline
+    htpasswd: admin:admin
+
+etcd:
+  endpoints:
+    - ip: 10.246.0.16
+      nodeName: master001
+    - ip: 10.246.0.17
+      nodeName: master002
+    - ip: 10.246.0.18
+      nodeName: master003
+
+ingress:
+  hosts:
+    - k8s.prometheus
+    - k8s_internal.prometheus
+
+# ==========================================
+# Container Configuration (Unified Namespace)
+# ==========================================
+container:
+  # Prometheus main container
+  prometheus:
+    image:
+      repository: registry-bj.capitalonline.net/eks/prometheus
+      tag: v2.46.0
+  
+  # Prometheus Operator
+  prometheus-operator:
+    image:
+      repository: registry-bj.capitalonline.net/eks/prometheus-operator
+      tag: v0.67.1
+  
+  # Config Reloader (Prometheus Operator sidecar)
+  config-reloader:
+    image:
+      repository: registry-bj.capitalonline.net/eks/prometheus-config-reloader
+      tag: v0.67.1
+  
+  # Node Exporter - Node metrics collection
+  node-exporter:
+    image:
+      repository: registry-bj.capitalonline.net/eks/node-exporter
+      tag: v1.6.1
+  
+  # Kube State Metrics - K8s cluster state metrics
+  kube-state-metrics:
+    image:
+      repository: registry-bj.capitalonline.net/eks/kube-state-metrics
+      tag: v2.9.2
+  
+  # Blackbox Exporter - Blackbox monitoring probe
+  blackbox-exporter:
+    image:
+      repository: registry-bj.capitalonline.net/eks/blackbox-exporter
+      tag: v0.24.0
+  
+  # Module Configmap Reloader (Blackbox Exporter sidecar)
+  module-configmap-reloader:
+    image:
+      repository: registry-bj.capitalonline.net/eks/configmap-reload
+      tag: v0.5.0
+  
+  # Kube RBAC Proxy (Shared sidecar for multiple components)
+  kube-rbac-proxy:
+    image:
+      repository: registry-bj.capitalonline.net/eks/kube-rbac-proxy
+      tag: v0.14.2
+

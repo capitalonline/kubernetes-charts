@@ -1,0 +1,108 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.17.2
+  name: networkinterfaces.networks.networking.kubernetes.com
+spec:
+  group: networks.networking.kubernetes.com
+  names:
+    kind: NetworkInterface
+    listKind: NetworkInterfaceList
+    plural: networkinterfaces
+    singular: networkinterface
+  scope: Cluster
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .status.phase
+      name: Phase
+      type: string
+    - jsonPath: .spec.instanceID
+      name: InstanceID
+      type: string
+    - jsonPath: .status.linkName
+      name: IfName
+      type: string
+    - jsonPath: .status.macAddress
+      name: MACAddress
+      type: string
+    - jsonPath: .status.errorCount
+      name: Error
+      type: integer
+    - jsonPath: .status.updateTimestamp
+      name: Timestamp
+      type: string
+    name: v1
+    schema:
+      openAPIV3Schema:
+        description: NetworkInterface is the Schema for the NetworkInterface API
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            properties:
+              extraConfig:
+                additionalProperties:
+                  type: string
+                type: object
+              instanceID:
+                type: string
+              ipv4:
+                type: string
+              ipv4CIDR:
+                type: string
+              ipv6:
+                type: string
+              ipv6CIDR:
+                type: string
+              netID:
+                format: int32
+                type: integer
+              network:
+                type: string
+              nodeName:
+                type: string
+              subnet:
+                type: string
+            type: object
+          status:
+            properties:
+              errorCount:
+                type: integer
+              linkIndex:
+                type: integer
+              linkName:
+                type: string
+              macAddress:
+                type: string
+              message:
+                type: string
+              phase:
+                type: string
+              taskId:
+                type: string
+              updateTimestamp:
+                format: date-time
+                type: string
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}

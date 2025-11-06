@@ -1,0 +1,164 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: p2p-accelerator-daemon
+  namespace: kube-system
+  labels:
+    app.kubernetes.io/app-component: p2p-accelerator
+spec:
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: p2p-accelerator
+      app.kubernetes.io/instance: p2p-accelerator
+      app.kubernetes.io/name: p2p-accelerator
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/app-component: p2p-accelerator
+        app.kubernetes.io/component: p2p-accelerator
+        app.kubernetes.io/instance: p2p-accelerator
+        app.kubernetes.io/name: p2p-accelerator
+    spec:
+      containers:
+      - args:
+        - registry
+        - --log-level=DEBUG
+        - --mirror-resolve-retries=3
+        - --mirror-resolve-timeout=3s
+        - --registry-addr=:5000
+        - --router-addr=:5001
+        - --metrics-addr=:9090
+        - --containerd-sock=/run/containerd/containerd.sock
+        - --containerd-namespace=k8s.io
+        - --containerd-registry-config-path=/etc/containerd/certs.d
+        - --bootstrap-kind=dns
+        - --dns-bootstrap-domain=p2p-accelerator-bootstrap.kube-system.svc.cluster.local.
+        - --resolve-latest-tag=true
+        - --containerd-content-path=/var/lib/containerd/io.containerd.content.v1.content
+        - --debug-web-enabled=true
+        - --mirrored-registries
+        {{- range .Values.mirroredRegistries }}
+        - {{ . }}
+        {{- end }}
+        env:
+        - name: DATA_DIR
+        - name: GOMEMLIMIT
+          valueFrom:
+            resourceFieldRef:
+              divisor: "1"
+              resource: limits.memory
+        - name: NODE_IP
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: status.hostIP
+        image: {{ index .Values.container "p2p-accelerator-registry" "image" "repository" }}:{{ index .Values.container "p2p-accelerator-registry" "image" "tag" }}
+        imagePullPolicy: {{ index .Values.container "p2p-accelerator-registry" "image" "pullPolicy" }}
+        name: registry
+        ports:
+        - containerPort: 5000
+          hostPort: 30020
+          name: registry
+          protocol: TCP
+        - containerPort: 5001
+          name: router
+          protocol: TCP
+        - containerPort: 9090
+          name: metrics
+          protocol: TCP
+        readinessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /healthz
+            port: registry
+            scheme: HTTP
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 1
+        resources: {}
+        securityContext:
+          readOnlyRootFilesystem: true
+        startupProbe:
+          failureThreshold: 60
+          httpGet:
+            path: /healthz
+            port: registry
+            scheme: HTTP
+          periodSeconds: 3
+          successThreshold: 1
+          timeoutSeconds: 1
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /run/containerd/containerd.sock
+          name: containerd-sock
+        - mountPath: /var/lib/containerd/io.containerd.content.v1.content
+          name: containerd-content
+          readOnly: true
+      dnsPolicy: ClusterFirst
+      initContainers:
+      - args:
+        - configuration
+        - --log-level=DEBUG
+        - --containerd-registry-config-path=/etc/containerd/certs.d
+        - --mirror-targets
+        - http://$(NODE_IP):30020
+        - http://$(NODE_IP):30021
+        - --resolve-tags=true
+        - --prepend-existing=false
+        - --mirrored-registries
+        {{- range .Values.mirroredRegistries }}
+        - {{ . }}
+        {{- end }}
+        env:
+        - name: NODE_IP
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: status.hostIP
+        image: {{ index .Values.container "p2p-accelerator-configuration" "image" "repository" }}:{{ index .Values.container "p2p-accelerator-configuration" "image" "tag" }}
+        imagePullPolicy: {{ index .Values.container "p2p-accelerator-configuration" "image" "pullPolicy" }}
+        name: configuration
+        resources: {}
+        securityContext:
+          readOnlyRootFilesystem: true
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /etc/containerd/certs.d
+          name: containerd-config
+      nodeSelector:
+        kubernetes.io/os: linux
+      priorityClassName: system-node-critical
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      serviceAccount: p2p-accelerator
+      serviceAccountName: p2p-accelerator
+      terminationGracePeriodSeconds: 30
+      tolerations:
+      - key: CriticalAddonsOnly
+        operator: Exists
+      - effect: NoExecute
+        operator: Exists
+      - effect: NoSchedule
+        operator: Exists
+      volumes:
+      - hostPath:
+          path: /run/containerd/containerd.sock
+          type: Socket
+        name: containerd-sock
+      - hostPath:
+          path: /var/lib/containerd/io.containerd.content.v1.content
+          type: Directory
+        name: containerd-content
+      - hostPath:
+          path: /etc/containerd/certs.d
+          type: DirectoryOrCreate
+        name: containerd-config
+  updateStrategy:
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 1
+    type: RollingUpdate

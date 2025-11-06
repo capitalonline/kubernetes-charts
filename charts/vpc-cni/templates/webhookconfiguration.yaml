@@ -1,0 +1,88 @@
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingWebhookConfiguration
+metadata:
+  name: vpc-cni-validating-webhook
+  labels:
+    app: vpc-cni
+webhooks:
+  - admissionReviewVersions: ["v1beta1", "v1"]
+    clientConfig:
+      caBundle: "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURCVENDQWUyZ0F3SUJBZ0lVYit3QU42T2JxaFVKZ2J1cHUxQlVOeWw2cEs4d0RRWUpLb1pJaHZjTkFRRUwKQlFBd0VqRVFNQTRHQTFVRUF3d0hkbkJqTFdOdWFUQWVGdzB5TlRBNE1UVXdOVFUzTURkYUZ3MHpOVEE0TVRNdwpOVFUzTURkYU1CSXhFREFPQmdOVkJBTU1CM1p3WXkxamJta3dnZ0VpTUEwR0NTcUdTSWIzRFFFQkFRVUFBNElCCkR3QXdnZ0VLQW9JQkFRQzg1Z0hBeW1tK0hwWGZqWUlrcGRVei9CVDYxdXVDcnBqSnZCd0VId3ROWS83bWxPU04Kd3hQUGQrK21aQ1dOeUV5V2xoL2NGVzl0Q3IvcStEdEVjYTNTUTFxNjFLU3EwbnpCZEx0bVJ0VE1OMndJNzAvVgpuVXhQOFVPNWVMOVYrQ0llNzhKZE1hR09JZnZvOUFVZDJweWpCZXdzbGtkRmlIbWRXcS9aMm5BYUxNa0dUYnZvClFwN1lPR2xkKzFFVWo4UTJ4VExZVG9jV05sRFVUZUEzWEw5dmRDZXN6eDNxK2RPbWJkV2tkOFZMakxzeHEwY3cKNWF3QnlMZmw3TFpEL0MvVjZHdktIQTBoTmdNajFQSlNhcVBWQVo4TjNhWXBIajhJTFI5aEgwUUFWN01WV2dnNwprZDR0S2FoVE5xeUdNUDRWWGMrMkpVbVRBL2cycFVmMW0ycW5BZ01CQUFHalV6QlJNQjBHQTFVZERnUVdCQlErCkNwVjF3V0grS1B2VXB2V0E0UUNnM0k2NnBqQWZCZ05WSFNNRUdEQVdnQlErQ3BWMXdXSCtLUHZVcHZXQTRRQ2cKM0k2NnBqQVBCZ05WSFJNQkFmOEVCVEFEQVFIL01BMEdDU3FHU0liM0RRRUJDd1VBQTRJQkFRQnpkUHRQa3hibApGc1V6dzJ1SU8xN2gxN1IwTmlYb2hhdFBFTVAzYWFvQUcraTRDdHZWM1ZqYlcwRFIzbGk3SEJTaXpHb0NMOEtxCkgvWC9Md3c1NEhBSmV4dk1GR2huNHo1eDFGbEFrZGtEV1NwRmVNdHZRUUFBaTJLdk90SHhVejVORmFUM3dWR04Kd1VNUVlRSktFeEgwamNwQUR5SGFvMWNnMmE5a2xsNnlFd3pWbC9Gd0J0Tk1yWlpmcHN6aEMxb3hKNmg5aFhEUwo2YkN2NlIySmxzVlMyK0tZaTQxYTBVRG1zRzFDTjQzOElmRCsvUzI0ZmpRVlFFTnUzMFltUngrcVdVekhWVE5zCmNQN1dYaG83c05zbXpKQU1HTHBoRzFCZkl1dlJ4WlFYLzhhd1k4RGc0RHFRaWFSdEpNdU9TYTVDSWRhL2lIR1EKK29CL3FRZUd1Rkt6Ci0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0K"
+      service:
+        name: vpc-cni-webhook
+        namespace: kube-system
+        port: 443
+        path: "/validate"
+    failurePolicy: Fail
+    matchPolicy: Equivalent
+    name: vpc-cni-v1.validating.vpc-cni
+    rules:
+    - apiGroups: ["networks.networking.kubernetes.com"]
+      apiVersions: ["v1"]
+      operations: ["CREATE", "DELETE"]
+      resources: ["networks", "subnets"]
+    sideEffects: None
+    timeoutSeconds: 10
+  - admissionReviewVersions: ["v1beta1", "v1"]
+    clientConfig:
+      caBundle: "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURCVENDQWUyZ0F3SUJBZ0lVYit3QU42T2JxaFVKZ2J1cHUxQlVOeWw2cEs4d0RRWUpLb1pJaHZjTkFRRUwKQlFBd0VqRVFNQTRHQTFVRUF3d0hkbkJqTFdOdWFUQWVGdzB5TlRBNE1UVXdOVFUzTURkYUZ3MHpOVEE0TVRNdwpOVFUzTURkYU1CSXhFREFPQmdOVkJBTU1CM1p3WXkxamJta3dnZ0VpTUEwR0NTcUdTSWIzRFFFQkFRVUFBNElCCkR3QXdnZ0VLQW9JQkFRQzg1Z0hBeW1tK0hwWGZqWUlrcGRVei9CVDYxdXVDcnBqSnZCd0VId3RAYS83bWxPU04Kd3hQUGQrK21aQ1dOeUV5V2xoL2NGVzl0Q3IvcStEdEVjYTNTUTFxNjFLU3EwbnpCZEx0bVJ0VE1OMndJNzAvVgpuVXhQOFVPNWVMOVYrQ0llNzhKZE1hR09JZnZvOUFVZDJweWpCZXdzbGtkRmlIbWRXcS9aMm5BYUxNa0dUYnZvClFwN1lPR2xkKzFFVWo4UTJ4VExZVG9jV05sRFVUZUEzWEw5dmRDZXN6eDNxK2RPbWJkV2tkOFZMakxzeHEwY3cKNWF3QnlMZmw3TFpEL0MvVjZHdktIQTBoTmdNajFQSlNhcVBWQVo4TjNhWXBIajhJTFI5aEgwUUFWN01WV2dnNwprZDR0S2FoVE5xeUdNUDRWWGMrMkpVbVRBL2cycFVmMW0ycW5BZ01CQUFHalV6QlJNQjBHQTFVZERnUVdCQlErCkNwVjF3V0grS1B2VXB2V0E0UUNnM0k2NnBqQWZCZ05WSFNNRUdEQVdnQlErQ3BWMXdXSCtLUHZVcHZXQTRRQ2cKM0k2NnBqQVBCZ05WSFJNQkFmOEVCVEFEQVFIL01BMEdDU3FHU0liM0RRRUJDd1VBQTRJQkFRQnpkUHRQa3hibApGc1V6dzJ1SU8xN2gxN1IwTmlYb2hhdFBFTVAzYWFvQUcraTRDdHZWM1ZqYlcwRFIzbGk3SEJTaXpHb0NMOEtxCkgvWC9Md3c1NEhBSmV4dk1GR2huNHo1eDFGbEFrZGtEV1NwRmVNdHZRUUFBaTJLdk90SHhVejVORmFUM3dWR04Kd1VNUVlRSktFeEgwamNwQUR5SGFvMWNnMmE5a2xsNnlFd3pWbC9Gd0J0Tk1yWlpmcHN6aEMxb3hKNmg5aFhEUwo2YkN2NlIySmxzVlMyK0tZaTQxYTBVRG1zRzFDTjQzOElmRCsvUzI0ZmpRVlFFTnUzMFltUngrcVdVekhWVE5zCmNQN1dYaG83c05zbXpKQU1HTHBoRzFCZkl1dlJ4WlFYLzhhd1k4RGc0RHFRaWFSdEpNdU9TYTVDSWRhL2lIR1EKK29CL3FRZUd1Rkt6Ci0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0K"
+      service:
+        name: vpc-cni-webhook
+        namespace: kube-system
+        port: 443
+        path: "/validate"
+    failurePolicy: Ignore
+    matchPolicy: Equivalent
+    name: core-v1.validating.vpc-cni
+    objectSelector:
+      matchExpressions:
+        - key: webhook.vpc-cni.io/ignore
+          operator: NotIn
+          values: ["TRUE", "true"]
+        - key: app
+          operator: NotIn
+          values: [ "kube-proxy" ]
+    rules:
+      - apiGroups: [""]
+        apiVersions: ["v1"]
+        operations: ["CREATE"]
+        resources: ["pods"]
+    sideEffects: None
+    timeoutSeconds: 10
+
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: MutatingWebhookConfiguration
+metadata:
+  name: vpc-cni-mutating-webhook
+  labels:
+    app: vpc-cni
+webhooks:
+  - admissionReviewVersions: ["v1beta1", "v1"]
+    clientConfig:
+      caBundle: "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURCVENDQWUyZ0F3SUJBZ0lVYit3QU42T2JxaFVKZ2J1cHUxQlVOeWw2cEs4d0RRWUpLb1pJaHZjTkFRRUwKQlFBd0VqRVFNQTRHQTFVRUF3d0hkbkJqTFdOdWFUQWVGdzB5TlRBNE1UVXdOVFUzTURkYUZ3MHpOVEE0TVRNdwpOVFUzTURkYU1CSXhFREFPQmdOVkJBTU1CM1p3WXkxamJta3dnZ0VpTUEwR0NTcUdTSWIzRFFFQkFRVUFBNElCCkR3QXdnZ0VLQW9JQkFRQzg1Z0hBeW1tK0hwWGZqWUlrcGRVei9CVDYxdXVDcnBqSnZCd0VId3DOES83bWxPU04Kd3hQUGQrK21aQ1dOeUV5V2xoL2NGVzl0Q3IvcStEdEVjYTNTUTFxNjFLU3EwbnpCZEx0bVJ0VE1OMndJNzAvVgpuVXhQOFVPNWVMOVYrQ0llNzhKZE1hR09JZnZvOUFVZDJweWpCZXdzbGtkRmlIbWRXcS9aMm5BYUxNa0dUYnZvClFwN1lPR2xkKzFFVWo4UTJ4VExZVG9jV05sRFVUZUEzWEw5dmRDZXN6eDNxK2RPbWJkV2tkOFZMakxzeHEwY3cKNWF3QnlMZmw3TFpEL0MvVjZHdktIQTBoTmdNajFQSlNhcVBWQVo4TjNhWXBIajhJTFI5aEgwUUFWN01WV2dnNwprZDR0S2FoVE5xeUdNUDRWWGMrMkpVbVRBL2cycFVmMW0ycW5BZ01CQUFHalV6QlJNQjBHQTFVZERnUVdCQlErCkNwVjF3V0grS1B2VXB2V0E0UUNnM0k2NnBqQWZCZ05WSFNNRUdEQVdnQlErQ3BWMXdXSCtLUHZVcHZXQTRRQ2cKM0k2NnBqQVBCZ05WSFJNQkFmOEVCVEFEQVFIL01BMEdDU3FHU0liM0RRRUJDd1VBQTRJQkFRQnpkUHRQa3hibApGc1V6dzJ1SU8xN2gxN1IwTmlYb2hhdFBFTVAzYWFvQUcraTRDdHZWM1ZqYlcwRFIzbGk3SEJTaXpHb0NMOEtxCkgvWC9Md3c1NEhBSmV4dk1GR2huNHo1eDFGbEFrZGtEV1NwRmVNdHZRUUFBaTJLdk90SHhVejVORmFUM3dWR04Kd1VNUVlRSktFeEgwamNwQUR5SGFvMWNnMmE5a2xsNnlFd3pWbC9Gd0J0Tk1yWlpmcHN6aEMxb3hKNmg5aFhEUwo2YkN2NlIySmxzVlMyK0tZaTQxYTBVRG1zRzFDTjQzOElmRCsvUzI0ZmpRVlFFTnUzMFltUngrcVdVekhWVE5zCmNQN1dYaG83c05zbXpKQU1HTHBoRzFCZkl1dlJ4WlFYLzhhd1k4RGc0RHFRaWFSdEpNdU9TYTVDSWRhL2lIR1EKK29CL3FRZUd1Rkt6Ci0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0K"
+      service:
+        name: vpc-cni-webhook
+        namespace: kube-system
+        port: 443
+        path: "/mutate"
+    failurePolicy: Ignore
+    matchPolicy: Equivalent
+    name: core-v1.mutating.vpc-cni
+    objectSelector:
+      matchExpressions:
+        - key: webhook.vpc-cni.io/ignore
+          operator: NotIn
+          values: ["TRUE", "true"]
+        - key: app
+          operator: NotIn
+          values: [ "kube-proxy" ]
+    reinvocationPolicy: Never
+    rules:
+      - apiGroups: [""]
+        apiVersions: ["v1"]
+        operations: ["CREATE"]
+        resources: ["pods"]
+    sideEffects: None
+    timeoutSeconds: 10
+

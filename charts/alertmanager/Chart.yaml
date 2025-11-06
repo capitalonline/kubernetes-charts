@@ -1,0 +1,7 @@
+apiVersion: v2
+name: alertmanager
+description: A Helm chart for Prometheus Alertmanager
+type: application
+version: 1.0.0
+appVersion: "0.26.0"
+

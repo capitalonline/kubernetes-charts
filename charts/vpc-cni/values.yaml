@@ -1,0 +1,136 @@
+# Default values for vpc-cni.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+# ==========================================
+# Component Configuration
+# ==========================================
+# Note: vpc-cni namespace is fixed to 'kube-system' and cannot be changed
+
+# CNI configuration
+cni:
+  # Default network type: Underlay or Overlay
+  defaultNetworkType: "Underlay"
+  # Default IP family: IPv4, IPv6, or DualStack
+  defaultIPFamily: "IPv4"
+  # Default IP retain policy
+  defaultIPRetain: true
+
+# DaemonSet configuration
+daemon:
+  # Update IP instance status
+  updateIPInstanceStatus: true
+  # Host type node selector for daemon pods
+  hostTypes:
+    - ecs
+    - bms
+  # Resource limits and requests
+  # Note: Webhook TLS certificate and service port are fixed in webhookconfiguration.yaml
+  # Fixed values: caBundle="<base64-encoded-cert>", service.port=443
+  resources: {}
+    # limits:
+    #   cpu: 500m
+    #   memory: 512Mi
+    # requests:
+    #   cpu: 100m
+    #   memory: 128Mi
+
+# Manager deployment configuration
+manager:
+  # Number of replicas
+  replicaCount: 3
+  # Kubernetes client QPS and burst settings
+  kubeClientQPS: 300
+  kubeClientBurst: 600
+  # Controller concurrency settings
+  controllerConcurrency: "Node=1,Pod=1,IPAM=1,NetworkStatus=1,SubnetStatus=1,Quota=1,IPInstance=1"
+  # Resource limits and requests
+  # Note: Webhook TLS certificate and service port are fixed in webhookconfiguration.yaml
+  # Fixed values: caBundle="<base64-encoded-cert>", service.port=443
+  resources: {}
+    # limits:
+    #   cpu: 1000m
+    #   memory: 1Gi
+    # requests:
+    #   cpu: 200m
+    #   memory: 256Mi
+
+# Webhook deployment configuration
+webhook:
+  # Number of replicas
+  replicaCount: 3
+  # Webhook port
+  port: 9890
+  # Resource limits and requests
+  # Note: Webhook TLS certificate and service port are fixed in webhookconfiguration.yaml
+  # Fixed values: caBundle="<base64-encoded-cert>", service.port=443
+  resources: {}
+    # limits:
+    #   cpu: 500m
+    #   memory: 512Mi
+    # requests:
+    #   cpu: 100m
+    #   memory: 128Mi
+
+# Priority class configuration
+priorityClassName: system-cluster-critical
+
+# Tolerations for control plane nodes
+tolerations:
+  - effect: NoSchedule
+    operator: Exists
+
+# Node selector for control plane nodes
+nodeSelector:
+  node-role.kubernetes.io/control-plane: ""
+
+# CDS (Cloud Service) configuration
+# These values should be provided via external secrets or configmaps
+cds:
+  # Will be read from 'eks-secrets' secret
+  # accessKeyId: ""
+  # accessKeySecret: ""
+  # Will be read from 'cds-properties' configmap
+  # apiSchema: ""
+  # apiHost: ""
+
+# Note: CNI configuration is fixed in configmap.yaml and cannot be customized
+# Default values: name="vpc-cni", cniVersion="0.3.1", serverSocket="/run/cni/vpc-cni.sock"
+# Plugins: bandwidth and portmap are both enabled
+
+# Note: Default Network resource is fixed in default-network.yaml and will be created automatically
+# Fixed values: name="underlay-network", type="Underlay", nodeSelector="kubernetes.io/os: linux"
+
+# ==========================================
+# Container Configuration (Unified Namespace)
+# ==========================================
+# Note: All vpc-cni containers share the same image configuration
+container:
+  # CNI Manager
+  cni-manager:
+    image:
+      repository: harbor-dev.yun-paas.com/dev/vpc-cni
+      pullPolicy: Always
+      tag: "v3.0.2"
+  
+  # VPC CNI Webhook
+  vpc-cni-webhook:
+    image:
+      repository: harbor-dev.yun-paas.com/dev/vpc-cni
+      pullPolicy: Always
+      tag: "v3.0.2"
+  
+  # CNI Daemon (DaemonSet main container)
+  cni-daemon:
+    image:
+      repository: harbor-dev.yun-paas.com/dev/vpc-cni
+      pullPolicy: Always
+      tag: "v3.0.2"
+  
+  # Install CNI (DaemonSet init container)
+  install-cni:
+    image:
+      repository: harbor-dev.yun-paas.com/dev/vpc-cni
+      pullPolicy: Always
+      tag: "v3.0.2"
+

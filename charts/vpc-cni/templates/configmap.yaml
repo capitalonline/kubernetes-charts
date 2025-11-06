@@ -1,0 +1,28 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: vpc-cni-conf
+  namespace: kube-system
+  labels:
+    app: vpc-cni
+data:
+  cni-config: |-
+    {
+        "name": "vpc-cni",
+        "cniVersion": "0.3.1",
+        "plugins": [
+            {
+                "type": "vpc-cni",
+                "server_socket": "/run/cni/vpc-cni.sock"
+            },
+            {
+                "type": "bandwidth",
+                "capabilities": {"bandwidth": true}
+            },
+            {
+                "type": "portmap",
+                "capabilities": {"portMappings": true}
+            }
+        ]
+    }
+

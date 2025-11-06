@@ -1,0 +1,32 @@
+# ==========================================
+# Component Configuration
+# ==========================================
+loki:
+  retention: 30d
+  maxQueryLength: 30d
+  storage:
+    storageClassName: default-local-sc
+    size: 20Gi
+
+# ==========================================
+# Container Configuration (Unified Namespace)
+# ==========================================
+container:
+  # Loki main container
+  loki:
+    image:
+      repository: registry-bj.capitalonline.net/eks/loki
+      tag: "3.2.0"
+  
+  # Promtail log collection
+  promtail-container:
+    image:
+      repository: registry-bj.capitalonline.net/eks/promtail
+      tag: "3.2.0"
+  
+  # Kubernetes event exporter
+  event-exporter:
+    image:
+      repository: registry-bj.capitalonline.net/eks/kubernetes-event-exporter
+      tag: v1.7
+

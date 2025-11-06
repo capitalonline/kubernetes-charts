@@ -1,0 +1,7 @@
+apiVersion: v2
+name: dcgm-exporter
+description: A Helm chart for NVIDIA DCGM Exporter
+type: application
+version: 1.0.0
+appVersion: "3.3.8-3.6.0"
+

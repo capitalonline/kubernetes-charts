@@ -1,0 +1,18 @@
+apiVersion: v2
+name: p2p-accelerator
+description: A Helm chart for P2P Accelerator - Container Image Acceleration System
+type: application
+version: 0.1.0
+appVersion: "v0.4.0"
+keywords:
+  - kubernetes
+  - p2p
+  - container
+  - registry
+  - acceleration
+home: https://github.com/p2p-accelerator/p2p-accelerator
+maintainers:
+  - name: p2p-accelerator
+sources:
+  - https://github.com/p2p-accelerator/p2p-accelerator
+

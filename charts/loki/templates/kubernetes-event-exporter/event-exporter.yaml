@@ -1,0 +1,96 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  namespace: monitoring
+  name: event-exporter
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: event-exporter
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: event-exporter
+subjects:
+  - kind: ServiceAccount
+    namespace: monitoring
+    name: event-exporter
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: event-exporter
+rules:
+- apiGroups: ["*"]
+  resources: ["*"]
+  verbs: ["get", "watch", "list"]
+- apiGroups: ["coordination.k8s.io"]
+  resources: ["leases"]
+  verbs: ["*"]
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: event-exporter-cfg
+  namespace: monitoring
+data:
+  config.yaml: |
+    logLevel: error
+    logFormat: json
+    route:
+      routes:
+        - match:
+            - receiver: "loki"
+    receivers:
+      - name: "loki"
+        loki:
+          streamLabels:
+            app: kubernetes-event-exporter
+          url: http://loki-svc:3100/loki/api/v1/push
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: event-exporter
+  namespace: monitoring
+  labels:
+    app.kubernetes.io/app-component: loki
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/app-component: loki
+        app: event-exporter
+    spec:
+      nodeSelector:
+        kubernetes.io/loki: ""
+      tolerations:
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
+        - key: node-role.eks.net/infra
+          operator: Exists
+          effect: NoSchedule
+      serviceAccountName: event-exporter
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: event-exporter
+          image: {{ index .Values.container "event-exporter" "image" "repository" }}:{{ index .Values.container "event-exporter" "image" "tag" }}
+          imagePullPolicy: IfNotPresent
+          args:
+            - -conf=/data/config.yaml
+          volumeMounts:
+            - mountPath: /data
+              name: cfg
+      volumes:
+        - name: cfg
+          configMap:
+            name: event-exporter-cfg
+  selector:
+    matchLabels:
+      app: event-exporter

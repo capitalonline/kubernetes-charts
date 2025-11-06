@@ -1,0 +1,42 @@
+# ==========================================
+# Component Configuration
+# ==========================================
+webhookAdapter:
+  replicas: 3
+  
+  # Webhook configuration
+  listenAddress: ":8090"
+  signature: "TEST"
+  
+  # Resource limits
+  resources:
+    requests:
+      memory: 50Mi
+      cpu: 100m
+    limits:
+      memory: 250Mi
+      cpu: 500m
+  
+  # Node selector
+  nodeSelector:
+    node-role.kubernetes.io/control-plane: ""
+  
+  # Tolerations
+  tolerations:
+    - key: node-role.kubernetes.io/control-plane
+      operator: Exists
+      effect: NoSchedule
+    - key: node-role.eks.net/infra
+      operator: Exists
+      effect: NoSchedule
+
+# ==========================================
+# Container Configuration (Unified Namespace)
+# ==========================================
+container:
+  # Webhook Adapter main container
+  webhook:
+    image:
+      repository: registry-bj.capitalonline.net/eks/alertmanager-webhook-adapter
+      tag: v1.1.7
+

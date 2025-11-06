@@ -1,0 +1,17 @@
+apiVersion: v2
+name: vpc-cni
+description: A Helm chart for VPC CNI - Container Network Interface for Kubernetes
+type: application
+version: 3.0.0
+appVersion: "v3.0.0"
+keywords:
+  - cni
+  - networking
+  - vpc
+  - kubernetes
+maintainers:
+  - name: VPC CNI Team
+home: https://github.com/kubernetes/vpc-cni
+sources:
+  - https://github.com/kubernetes/vpc-cni
+

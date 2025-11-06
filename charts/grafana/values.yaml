@@ -1,0 +1,23 @@
+# ==========================================
+# Component Configuration
+# ==========================================
+grafana:
+  storage:
+    storageClassName: default-local-sc
+    size: 20Gi
+
+ingress:
+  hosts:
+    - k8s.grafana
+    - k8s_internal.grafana
+
+# ==========================================
+# Container Configuration (Unified Namespace)
+# ==========================================
+container:
+  # Grafana main container
+  grafana:
+    image:
+      repository: registry-bj.capitalonline.net/eks/grafana
+      tag: 10.3.1
+

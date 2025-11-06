@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cronhpa-controller
+  namespace: kube-system
+  labels:
+    app.kubernetes.io/app-component: cronhpa-controller
+    app: cronhpa-controller
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: cronhpa-controller
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/app-component: cronhpa-controller
+        app: cronhpa-controller
+    spec:
+      serviceAccountName: cronhpa-controller
+      containers:
+        - name: cronhpa-controller
+          image: {{ index .Values.container "cronhpa-controller" "image" "repository" }}:{{ index .Values.container "cronhpa-controller" "image" "tag" }}
+          imagePullPolicy: {{ index .Values.container "cronhpa-controller" "image" "pullPolicy" }}
+          env:
+            - name: TZ
+              value: "Asia/Shanghai"
+          resources: {}
