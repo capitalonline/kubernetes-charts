@@ -1,0 +1,99 @@
+# =========================================================
+# Namespace
+# =========================================================
+namespace:
+  create: true
+  name: ingress-nginx
+
+# =========================================================
+# RBAC
+# =========================================================
+rbac:
+  create: true
+
+  controllerRoleName: ingress-nginx
+  admissionRoleName: ingress-nginx-admission
+
+  controllerClusterRoleName: ingress-nginx
+  admissionClusterRoleName: ingress-nginx-admission
+
+  controllerRoleBindingName: ingress-nginx
+  admissionRoleBindingName: ingress-nginx-admission
+
+  controllerClusterRoleBindingName: ingress-nginx
+  admissionClusterRoleBindingName: ingress-nginx-admission
+
+
+# =========================================================
+# IngressClassResource
+# =========================================================
+ingressClassResource:
+  enabled: true
+  name: nginx
+  controllerValue: k8s.io/ingress-nginx
+
+# =========================================================
+# Controller
+# =========================================================
+controller:
+  # Deployment
+  replicaCount: 1
+  nodeSelector: {}
+
+  image:
+    registry: capitalonline
+    image: /ingress-nginx-controller
+    tag: "v1.7.1"
+    pullPolicy: IfNotPresent
+
+  # ServiceAccount
+  serviceAccount:
+    create: true
+    name: ingress-nginx
+    admission:
+      name: ingress-nginx-admission
+
+  # Service
+  service:
+    create: true
+    type: NodePort   # NodePort | LoadBalancer
+    name: ingress-nginx-controller
+    annotations: { }
+    externalTrafficPolicy: Cluster
+    ipFamilyPolicy: SingleStack
+    port:
+      http: 30080
+      https: 30443
+    nodePorts:
+      http: 30080
+      https: 30443
+
+  # Admission Webhook
+  admissionWebhooks:
+    enabled: true
+    failurePolicy: Fail
+    patch:
+      enabled: true
+
+    service:
+      name: ingress-nginx-controller-admission
+      port: 443
+
+    name: ingress-nginx-admission
+
+    createSecretJob:
+      image:
+        registry: capitalonline
+        image: /ingress-nginx-kube-webhook-certgen
+        tag: v20230312
+        pullPolicy: IfNotPresent
+
+  config:
+    allowSnippetAnnotations: true
+    create: true
+    name: ingress-nginx-controller
+
+
+
+
+

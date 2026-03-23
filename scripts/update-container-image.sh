@@ -35,22 +35,22 @@ function init_log_file() {
             is_new_log=true
             # Create log file
             touch "${LOG_FILE}" 2>/dev/null || {
-                echo -e "${RED}[ERROR]${NC} Cannot create log file: ${LOG_FILE}"
+                echo -e "${RED}[ERROR]${NC} 无法创建日志文件: ${LOG_FILE}"
                 exit 1
             }
         fi
         
         # 只在新日志文件时显示提示（避免重复提示）
         if [[ "${is_new_log}" == "true" ]]; then
-            echo -e "${GREEN}[INFO]${NC} Log will be saved to: ${LOG_FILE}"
+            echo -e "${GREEN}[INFO]${NC} 日志将保存到: ${LOG_FILE}"
         fi
         
         # 追加更新脚本的日志头部
         echo "" >> "${LOG_FILE}"
         echo "======================================" >> "${LOG_FILE}"
-        echo "Image Update Script Execution Log" >> "${LOG_FILE}"
+        echo "镜像更新脚本执行日志" >> "${LOG_FILE}"
         echo "Release: ${release}" >> "${LOG_FILE}"
-        echo "Start time: $(date '+%Y-%m-%d %H:%M:%S')" >> "${LOG_FILE}"
+        echo "开始时间: $(date '+%Y-%m-%d %H:%M:%S')" >> "${LOG_FILE}"
         echo "======================================" >> "${LOG_FILE}"
         echo "" >> "${LOG_FILE}"
     fi
@@ -109,9 +109,14 @@ function log_cmd() {
 
 function error_exit() {
     log_error "$1"
-    log_error "Image update failed, please check the error message above"
+    log_error "镜像更新失败，请检查上述错误信息"
     if [[ "${ENABLE_LOG_FILE}" == "true" ]] && [[ -n "${LOG_FILE}" ]]; then
-        log_error "Detailed log saved to: ${LOG_FILE}"
+        echo "" >> "${LOG_FILE}"
+        echo "======================================" >> "${LOG_FILE}"
+        echo "结束时间: $(date '+%Y-%m-%d %H:%M:%S')" >> "${LOG_FILE}"
+        echo "状态: 失败" >> "${LOG_FILE}"
+        echo "======================================" >> "${LOG_FILE}"
+        log_error "详细日志已保存到: ${LOG_FILE}"
     fi
     exit 1
 }
@@ -142,7 +147,7 @@ Options:
 Examples:
   # Update cronhpa-controller image (Deployment)
   $0 cronhpa-controller -c cronhpa-controller \\
-    -i harbor-dev.yun-paas.com/dev/kubernetes-cronhpa-controller:v1.1.0 \\
+    -i capitalonline/kubernetes-cronhpa-controller:v1.1.0 \\
     -n kube-system -k Deployment
 
   # Update prometheus node-exporter (DaemonSet)
@@ -166,6 +171,9 @@ Component to Container Mapping:
   prometheus-adapter  → prometheus-adapter
   cronhpa-controller  → cronhpa-controller
   vpc-cni             → cni-daemon, cni-manager, vpc-cni-webhook, install-cni
+  csi-nfs            → csi-provisioner, csi-resizer, csi-snapshotter,
+                      livenessprobe, node-driver-registrar, nfs
+  cloud-controller-manager  → cds-cloud-controller-manager
 
 EOF
 }
@@ -182,7 +190,7 @@ function parse_image() {
         tag="${image##*:}"
         image="${image%:*}"
     else
-        error_exit "Image must include tag (format: repository:tag or registry/repository:tag)"
+        error_exit "镜像必须包含标签 (格式: repository:tag 或 registry/repository:tag)"
     fi
     
     # Extract registry and repository
@@ -213,13 +221,13 @@ function build_helm_command() {
     local image_repository="$5"
     local image_tag="$6"
     
-    log_debug "Building helm upgrade command..."
+    log_debug "构建 helm upgrade 命令..."
     log_debug "  Release: ${release}"
-    log_debug "  Namespace: ${namespace}"
-    log_debug "  Container: ${container}"
-    log_debug "  Registry: ${image_registry}"
-    log_debug "  Repository: ${image_repository}"
-    log_debug "  Tag: ${image_tag}"
+    log_debug "  命名空间: ${namespace}"
+    log_debug "  容器: ${container}"
+    log_debug "  仓库地址: ${image_registry}"
+    log_debug "  镜像名: ${image_repository}"
+    log_debug "  标签: ${image_tag}"
     
     # Build values path for container
     local values_path="container.${container}.image"
@@ -240,7 +248,7 @@ function build_helm_command() {
     # Add reuse-values to keep other configurations
     cmd="${cmd} --reuse-values"
     
-    log_debug "Built command: ${cmd}"
+    log_debug "构建的命令: ${cmd}"
     echo "${cmd}"
 }
 
@@ -248,14 +256,14 @@ function build_helm_command() {
 function execute_helm_upgrade() {
     local cmd="$1"
     
-    log_info "Executing helm upgrade..."
+    log_info "执行 helm upgrade..."
     log_cmd "${cmd}"
     
     if eval "${cmd}"; then
-        log_info "✓ Helm upgrade completed successfully"
+        log_info "✓ Helm 升级成功完成"
         return 0
     else
-        log_error "Helm upgrade failed"
+        log_error "Helm 升级失败"
         return 1
     fi
 }
@@ -272,30 +280,30 @@ function update_image() {
     init_log_file "${release}"
     
     log_info "=========================================="
-    log_info "Kubernetes Image Update Script"
+    log_info "Kubernetes 镜像更新脚本"
     log_info "Release: ${release}"
-    [[ "${VERBOSE}" == "true" ]] && log_info "Verbose mode: Enabled"
-    [[ "${DEBUG}" == "true" ]] && log_info "Debug mode: Enabled"
+    [[ "${VERBOSE}" == "true" ]] && log_info "详细模式: 已启用"
+    [[ "${DEBUG}" == "true" ]] && log_info "调试模式: 已启用"
     log_info "=========================================="
     
-    log_step "Starting image update process"
+    log_step "开始镜像更新流程"
     
     # Display configuration
-    log_info "Configuration:"
+    log_info "配置信息:"
     log_info "  Release:   ${release}"
-    log_info "  Namespace: ${namespace}"
-    log_info "  Kind:      ${kind}"
-    log_info "  Container: ${container}"
-    log_info "  Image:     ${image}"
+    log_info "  命名空间:  ${namespace}"
+    log_info "  资源类型:  ${kind}"
+    log_info "  容器名称:  ${container}"
+    log_info "  镜像地址:  ${image}"
     
     # Parse image
     local parsed=$(parse_image "${image}")
     IFS='|' read -r image_registry image_repository image_tag <<< "${parsed}"
     
-    log_info "Parsed image components:"
-    [[ -n "${image_registry}" ]] && log_info "  Registry:   ${image_registry}"
-    log_info "  Repository: ${image_repository}"
-    log_info "  Tag:        ${image_tag}"
+    log_info "解析镜像组件:"
+    [[ -n "${image_registry}" ]] && log_info "  仓库地址:  ${image_registry}"
+    log_info "  镜像名称:  ${image_repository}"
+    log_info "  标签版本:  ${image_tag}"
     
     # Build full image string for verification
     local full_image="${image_repository}:${image_tag}"
@@ -305,31 +313,31 @@ function update_image() {
     
     # Check if chart exists
     if [[ ! -d "${CHARTS_DIR}/${release}" ]]; then
-        error_exit "Chart directory not found: ${CHARTS_DIR}/${release}"
+        error_exit "Chart 目录不存在: ${CHARTS_DIR}/${release}"
     fi
     
     # Build and execute helm upgrade command
-    log_step "Executing Helm upgrade"
+    log_step "执行 Helm 升级"
     local helm_cmd=$(build_helm_command "${release}" "${namespace}" "${container}" \
         "${image_registry}" "${image_repository}" "${image_tag}")
     
     if ! execute_helm_upgrade "${helm_cmd}"; then
-        error_exit "Helm upgrade failed"
+        error_exit "Helm 升级失败"
     fi
     
-    log_step "✓ Image update completed successfully"
+    log_step "✓ 镜像更新成功"
     log_info "Release: ${release}"
-    log_info "Container: ${container}"
-    log_info "New image: ${full_image}"
+    log_info "容器名称: ${container}"
+    log_info "新镜像: ${full_image}"
     
     # Log file end marker
     if [[ "${ENABLE_LOG_FILE}" == "true" ]] && [[ -n "${LOG_FILE}" ]]; then
         echo "" >> "${LOG_FILE}"
         echo "======================================" >> "${LOG_FILE}"
-        echo "End time: $(date '+%Y-%m-%d %H:%M:%S')" >> "${LOG_FILE}"
-        echo "Status: Success" >> "${LOG_FILE}"
+        echo "结束时间: $(date '+%Y-%m-%d %H:%M:%S')" >> "${LOG_FILE}"
+        echo "状态: 成功" >> "${LOG_FILE}"
         echo "======================================" >> "${LOG_FILE}"
-        log_info "Log saved to: ${LOG_FILE}"
+        log_info "日志已保存到: ${LOG_FILE}"
     fi
 }
 
@@ -403,28 +411,28 @@ function main() {
     
     # Validate required parameters
     if [[ -z "${RELEASE}" ]]; then
-        error_exit "Release name is required (first argument)"
+        error_exit "Release 名称是必需的 (第一个参数)"
     fi
     
     if [[ -z "${CONTAINER}" ]]; then
-        error_exit "Container name is required (-c/--container)"
+        error_exit "容器名称是必需的 (-c/--container)"
     fi
     
     if [[ -z "${IMAGE}" ]]; then
-        error_exit "Image is required (-i/--image)"
+        error_exit "镜像地址是必需的 (-i/--image)"
     fi
     
     if [[ -z "${NAMESPACE}" ]]; then
-        error_exit "Namespace is required (-n/--namespace)"
+        error_exit "命名空间是必需的 (-n/--namespace)"
     fi
     
     if [[ -z "${KIND}" ]]; then
-        error_exit "Resource kind is required (-k/--kind). Valid values: Deployment, StatefulSet, DaemonSet"
+        error_exit "资源类型是必需的 (-k/--kind). 有效值: Deployment, StatefulSet, DaemonSet"
     fi
     
     # Validate kind value
     if [[ ! "${KIND}" =~ ^(Deployment|StatefulSet|DaemonSet)$ ]]; then
-        error_exit "Invalid resource kind: ${KIND}. Valid values: Deployment, StatefulSet, DaemonSet"
+        error_exit "无效的资源类型: ${KIND}. 有效值: Deployment, StatefulSet, DaemonSet"
     fi
     
     # Execute update

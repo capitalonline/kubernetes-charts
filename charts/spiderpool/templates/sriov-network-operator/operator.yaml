@@ -1,0 +1,253 @@
+{{- if .Values.sriov.install -}}
+{{- $_ := include "generate-ca-certs" . }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.sriov.name | trunc 63 | trimSuffix "-" }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "sriov.operator.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.sriov.replicas }}
+  selector:
+    matchLabels:
+      {{- include "sriov.operator.selectorLabels" . | nindent 6 }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 33%
+  template:
+    metadata:
+      {{- if .Values.global.commonAnnotations }}
+      annotations:
+        {{- include "tplvalues.render" ( dict "value" .Values.global.commonAnnotations "context" $ ) | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "sriov.operator.selectorLabels" . | nindent 8 }}
+        {{- if .Values.global.commonLabels }}
+        {{- include "tplvalues.render" ( dict "value" .Values.global.commonLabels "context" $ ) | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- with .Values.sriov.nodeSelector }}
+      nodeSelector:
+      {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.sriov.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8}}
+      {{- end }}
+      {{- with .Values.sriov.tolerations }}
+      tolerations:
+      {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ .Values.sriov.name | trunc 63 | trimSuffix "-" }}
+      priorityClassName: {{ default "system-node-critical" .Values.sriov.priorityClassName }}
+      {{- if .Values.sriov.image.imagePullSecrets }}
+      imagePullSecrets:
+      {{- with .Values.sriov.image.imagePullSecrets }}
+      {{- toYaml . | trim | nindent 6 }}
+      {{- end }}
+      {{- end }}
+      hostNetwork: {{ .Values.sriov.hostnetwork }}
+      containers:
+        - name: {{ .Values.sriov.name | trunc 63 | trimSuffix "-" }}
+          image: {{ include "sriov.operator.image" . | quote }}
+          command:
+            - sriov-network-operator
+          {{- with .Values.sriov.resources }}
+          resources:
+            {{- toYaml . | trim | nindent 12 }}
+          {{- end }}
+          imagePullPolicy: {{ .Values.sriov.image.pullPolicy }}
+          env:
+            - name: WATCH_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: SRIOV_CNI_IMAGE
+              value:
+            - name: SRIOV_INFINIBAND_CNI_IMAGE
+              value:
+            - name: OVS_CNI_IMAGE
+              value:
+            - name: SRIOV_DEVICE_PLUGIN_IMAGE
+              value: {{ include "sriov.sriovDevicePlugin.image" . | quote }}
+            - name: NETWORK_RESOURCES_INJECTOR_IMAGE
+              value: {{ include "sriov.resourcesInjector.image" . | quote }}
+            - name: OPERATOR_NAME
+              value: {{ .Values.sriov.name | trunc 63 | trimSuffix "-" }}
+            - name: SRIOV_NETWORK_CONFIG_DAEMON_IMAGE
+              value: {{ include "sriov.sriovConfigDaemon.image" . | quote }}
+            - name: SRIOV_NETWORK_WEBHOOK_IMAGE
+              value: {{ include "sriov.webhook.image" . | quote }}
+            - name: RESOURCE_PREFIX
+              value: {{ .Values.sriov.resourcePrefix }}
+            - name: IMAGE_PULL_SECRETS
+              value: {{ .Values.sriov.image.pullPolicy | quote }}
+            - name: NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+            - name: RELEASE_VERSION
+              value: {{ .Release.AppVersion }}
+            - name: SRIOV_CNI_BIN_PATH
+              value: {{ .Values.global.cniBinHostPath }}
+            - name: CLUSTER_TYPE
+              value: kubernetes
+            {{- if .Values.sriov.operatorConfig.enableOperatorWebhook }}
+            - name: ADMISSION_CONTROLLERS_CERTIFICATES_OPERATOR_SECRET_NAME
+              value: {{ .Values.sriov.webhooktls.secretName | trunc 63 | trimSuffix "-" }}
+            - name: ADMISSION_CONTROLLERS_CERTIFICATES_OPERATOR_CA_CRT
+              value: {{ .ca.Cert | b64enc }}
+            {{- end }}
+            {{- if .Values.sriov.operatorConfig.enableInjector }}
+            - name: ADMISSION_CONTROLLERS_CERTIFICATES_INJECTOR_SECRET_NAME
+              value: {{ .Values.sriov.injectortls.secretName | trunc 63 | trimSuffix "-" }}
+            - name: ADMISSION_CONTROLLERS_CERTIFICATES_INJECTOR_CA_CRT
+              value: {{ .ca.Cert | b64enc }}
+            {{- end }}
+            {{- if and ( eq .Values.sriov.webhooktls.method "certmanager") ( or .Values.sriov.operatorConfig.enableOperatorWebhook .Values.sriov.operatorConfig.enableInjector ) }}
+            - name: ADMISSION_CONTROLLERS_CERTIFICATES_CERT_MANAGER_ENABLED
+              value: "true"
+            {{- end }}
+{{- if .Values.sriov.operatorConfig.enableInjector -}}
+{{- if eq .Values.sriov.injectortls.method "certmanager" -}}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ .Values.sriov.name | trunc 63 | trimSuffix "-" }}-injector-server-certs
+  namespace: {{ .Release.Namespace }}
+spec:
+  issuerRef:
+    name: {{ .Values.sriov.injectortls.certmanager.issuerName | trunc 63 | trimSuffix "-" }}
+  secretName: {{ .Values.sriov.injectortls.secretName | trunc 63 | trimSuffix "-" }}
+  commonName: {{ .Values.sriov.name | trunc 63 | trimSuffix "-" }}.{{ .Release.Namespace }}.svc
+  dnsNames:
+    - {{ .Values.sriov.injectortls.serviceName | trunc 63 | trimSuffix "-" }}
+    - {{ .Values.sriov.injectortls.serviceName | trunc 63 | trimSuffix "-" }}.{{ .Release.Namespace }}
+    - {{ .Values.sriov.injectortls.serviceName | trunc 63 | trimSuffix "-" }}.{{ .Release.Namespace }}.svc
+    - {{ .Values.sriov.injectortls.serviceName | trunc 63 | trimSuffix "-" }}.{{ .Release.Namespace }}.svc.{{ .Values.global.clusterDnsDomain }}
+  {{- range $dns := .Values.sriov.injectortls.certmanager.extraDnsNames }}
+  - {{ $dns | quote }}
+  {{- end }}
+  {{- if .Values.sriov.injectortls.certmanager.extraIPAddresses }}
+  ipAddresses:
+  {{- range $ip := .Values.sriov.injectortls.certmanager.extraIPAddresses }}
+  - {{ $ip | quote }}
+  {{- end }}
+  {{- end }}
+  duration: {{ printf "%dh" (mul .Values.sriov.injectortls.certmanager.certValidityDuration 24) }}
+  {{- end }}
+  {{- if (eq .Values.sriov.injectortls.method "provided") }}
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ .Values.sriov.injectortls.secretName | trunc 63 | trimSuffix "-" }}
+  namespace: {{ .Release.Namespace }}
+type: kubernetes.io/tls
+data:
+  ca.crt:  {{ .Values.sriov.injectortls.provided.tlsCa | required "missing sriov.injectortls.provided.tlsCa" }}
+  tls.crt: {{ .Values.sriov.injectortls.provided.tlsCert | required "missing sriov.injectortls.provided.tlsCert" }}
+  tls.key: {{ .Values.sriov.injectortls.provided.tlsKey  | required "missing sriov.injectortls.provided.tlsKey"  }}
+  {{- end }}
+  {{- if eq .Values.sriov.injectortls.method "auto" }}
+---
+{{- $cn := printf .Values.sriov.name }}
+{{- $ip := .Values.sriov.injectortls.auto.extraIpAddresses }}
+{{- $dns1 := printf "%s.%s" .Values.sriov.injectortls.serviceName .Release.Namespace }}
+{{- $dns2 := printf "%s.%s.svc" .Values.sriov.injectortls.serviceName .Release.Namespace }}
+{{- $dns3 := printf "%s.%s.svc.%s" .Values.sriov.injectortls.serviceName .Release.Namespace .Values.global.clusterDnsDomain }}
+{{- $dns := prepend .Values.sriov.injectortls.auto.extraDnsNames $dns1 }}
+{{- $dns = prepend $dns $dns2 }}
+{{- $dns = prepend $dns $dns3 }}
+{{- $dns = prepend $dns $cn }}
+{{- $cert := genSignedCert $cn $ip $dns (.Values.sriov.injectortls.auto.certExpiration | int) .ca }}
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ .Values.sriov.injectortls.secretName | trunc 63 | trimSuffix "-" }}
+  namespace: {{ .Release.Namespace }}
+type: kubernetes.io/tls
+data:
+  ca.crt:  {{ .ca.Cert | b64enc }}
+  tls.crt: {{ $cert.Cert | b64enc }}
+  tls.key: {{ $cert.Key  | b64enc }}
+{{- end }}
+{{- end }}
+{{- if .Values.sriov.operatorConfig.enableOperatorWebhook -}}
+{{- if eq .Values.sriov.webhooktls.method "certmanager" -}}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ .Values.sriov.name | trunc 63 | trimSuffix "-" }}-webhook-server-certs
+  namespace: {{ .Release.Namespace }}
+spec:
+  issuerRef:
+    name: {{ .Values.sriov.webhooktls.certmanager.issuerName | trunc 63 | trimSuffix "-" }}
+  secretName: {{ .Values.sriov.webhooktls.secretName | trunc 63 | trimSuffix "-" }}
+  commonName: {{ .Values.sriov.name | trunc 63 | trimSuffix "-" }}.{{ .Release.Namespace }}.svc
+  dnsNames:
+    - {{ .Values.sriov.webhooktls.serviceName | trunc 63 | trimSuffix "-" }}
+    - {{ .Values.sriov.webhooktls.serviceName | trunc 63 | trimSuffix "-" }}.{{ .Release.Namespace }}
+    - {{ .Values.sriov.webhooktls.serviceName | trunc 63 | trimSuffix "-" }}.{{ .Release.Namespace }}.svc
+    - {{ .Values.sriov.webhooktls.serviceName | trunc 63 | trimSuffix "-" }}.{{ .Release.Namespace }}.svc.{{ .Values.global.clusterDnsDomain }}
+  {{- range $dns := .Values.sriov.webhooktls.certmanager.extraDnsNames }}
+  - {{ $dns | quote }}
+  {{- end }}
+  {{- if .Values.sriov.webhooktls.certmanager.extraIPAddresses }}
+  ipAddresses:
+  {{- range $ip := .Values.sriov.webhooktls.certmanager.extraIPAddresses }}
+  - {{ $ip | quote }}
+  {{- end }}
+  {{- end }}
+  duration: {{ printf "%dh" (mul .Values.sriov.webhooktls.certmanager.certValidityDuration 24) }}
+  {{- end }}
+  {{- if (eq .Values.sriov.webhooktls.method "provided") }}
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ .Values.sriov.webhooktls.secretName | trunc 63 | trimSuffix "-" }}
+  namespace: {{ .Release.Namespace }}
+type: kubernetes.io/tls
+data:
+  ca.crt:  {{ .Values.sriov.webhooktls.provided.tlsCa | required "missing sriov.webhooktls.provided.tlsCa" }}
+  tls.crt: {{ .Values.sriov.webhooktls.provided.tlsCert | required "missing sriov.webhooktls.provided.tlsCert" }}
+  tls.key: {{ .Values.sriov.webhooktls.provided.tlsKey  | required "missing sriov.webhooktls.provided.tlsKey"  }}
+{{- end }}
+{{- if eq .Values.sriov.webhooktls.method "auto" }}
+---
+{{- $cn := printf .Values.sriov.name }}
+{{- $ip := .Values.sriov.webhooktls.auto.extraIpAddresses }}
+{{- $dns1 := printf "%s.%s" .Values.sriov.webhooktls.serviceName .Release.Namespace }}
+{{- $dns2 := printf "%s.%s.svc" .Values.sriov.webhooktls.serviceName .Release.Namespace }}
+{{- $dns3 := printf "%s.%s.svc.%s" .Values.sriov.webhooktls.serviceName .Release.Namespace .Values.global.clusterDnsDomain }}
+{{- $dns := prepend .Values.sriov.webhooktls.auto.extraDnsNames $dns1 }}
+{{- $dns = prepend $dns $dns2 }}
+{{- $dns = prepend $dns $dns3 }}
+{{- $dns = prepend $dns $cn }}
+{{- $cert := genSignedCert $cn $ip $dns (.Values.sriov.webhooktls.auto.certExpiration | int) .ca }}
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ .Values.sriov.webhooktls.secretName | trunc 63 | trimSuffix "-" }}
+  namespace: {{ .Release.Namespace }}
+type: kubernetes.io/tls
+data:
+  ca.crt:  {{ .ca.Cert | b64enc }}
+  tls.crt: {{ $cert.Cert | b64enc }}
+  tls.key: {{ $cert.Key  | b64enc }}
+{{- end }}
+{{- end }}
+{{- end }}

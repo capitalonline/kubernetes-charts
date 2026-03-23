@@ -1,0 +1,56 @@
+# ==========================================
+# Node Config Agent Configuration (Hardcoded)
+# ==========================================
+# 注意：此组件严格按照硬编码设计规范，所有配置均为固定值
+# 不允许用户通过参数自定义任何配置，以确保部署的一致性和稳定性
+
+nodeConfigAgent:
+  # DaemonSet配置（硬编码）
+  image:
+    repository: capitalonline/node-agent
+    tag: v1.3
+    pullPolicy: Always
+  
+  # 资源预留（硬编码）
+  kubeReserved:
+    cpu: "2"
+    memory: "2Gi"
+  
+  # 目标Annotation Key（硬编码）
+  targetAnnotationKey: "cds-node/cpu-manager-policy"
+  
+  # 宿主机路径映射（硬编码）
+  hostPaths:
+    kubeletDefaults: "/host/etc/default/kubelet"
+    cpuManagerState: "/host/var/lib/kubelet/cpu_manager_state"
+
+# ==========================================
+# 安全配置（硬编码）
+# ==========================================
+security:
+  privileged: true
+  hostPID: true
+
+# ==========================================
+# 节点选择器（硬编码）
+# ==========================================
+nodeSelector:
+  # 排除控制平面节点，仅在工作节点运行
+  controlPlane:
+    key: node-role.kubernetes.io/control-plane
+    operator: DoesNotExist
+  master:
+    key: node-role.kubernetes.io/master
+    operator: DoesNotExist
+
+# ==========================================
+# Container Configuration (Unified Namespace)
+# ==========================================
+# 注意：为了支持镜像更新脚本，使用统一的 container 命名空间
+container:
+  # Node Agent main container
+  agent:
+    image:
+      repository: capitalonline/node-agent
+      tag: v1.0.0
+      pullPolicy: Always

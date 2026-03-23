@@ -1,0 +1,40 @@
+apiVersion: kubeprober.erda.cloud/v1
+kind: Probe
+metadata:
+  name: node
+  namespace: kubeprober
+spec:
+  type: DaemonSet
+  policy:
+    # unit: minute
+    runInterval: 15
+  template:
+    containers:
+      - env:
+          - name: NODE_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: spec.nodeName
+          # Run interval for loop execution (seconds)
+          - name: RUN_INTERVAL
+            value: "900"  # 3 minutes = 180 seconds
+          # 存储容量阈值配置（百分比）
+          - name: ROOT_DISK_THRESHOLD
+            value: "80"  # 根目录磁盘使用率阈值，默认 80%
+          - name: CONTAINERD_DISK_THRESHOLD
+            value: "80"  # containerd 目录磁盘使用率阈值，默认 80%
+          # 命令超时配置（秒）
+          - name: COMMAND_TIMEOUT
+            value: "5"  # df 等命令的超时时间，防止卡住，默认 5 秒
+        name: k8s
+        image: capitalonline/probe-node:v1.0.0
+        command: ["/run-loop.sh"]
+        resources:
+          requests:
+            cpu: 10m
+            memory: 50Mi
+    restartPolicy: Always
+    # Tolerate all taints to run on all nodes including masters
+    tolerations:
+      - operator: Exists
+

@@ -23,7 +23,7 @@ function init_log_file() {
     if [[ "${ENABLE_LOG_FILE}" == "true" ]]; then
         if [[ -z "${LOG_FILE}" ]]; then
             # 自动生成日志文件名，包含组件名称
-            LOG_FILE="/tmp/k8s-monitoring-uninstall-${component}-$(date +%Y%m%d-%H%M%S).log"
+            LOG_FILE="/tmp/k8s-uninstall-${component}-$(date +%Y%m%d-%H%M%S).log"
         fi
         
         # 检查日志文件是否已存在（由入口脚本创建）
@@ -129,6 +129,14 @@ function print_help() {
   alertmanager-webhook-adapter        卸载 Alertmanager Webhook Adapter
   cronhpa-controller                  卸载 CronHPA Controller
   vpc-cni                             卸载 VPC CNI 网络插件
+  csi-nfs                             卸载 CSI NFS 驱动
+  p2p-accelerator                     卸载 P2P Accelerator 镜像加速
+  csi-disk                            卸载 CSI Disk 存储插件
+  csi-oss                             卸载 CSI OSS 对象存储插件
+  kubeprober                          卸载 KubeProber 集群诊断工具
+  node-agent                          卸载 Node Agent 绑核组件
+  cloud-controller-manager                      卸载云控制器
+  ingress-nginx                       卸载 ingress-nginx 控制器
 
 全局选项:
   -v, --verbose                       显示详细信息（包括执行的命令）
@@ -290,7 +298,7 @@ function main() {
                 print_help
                 exit 0
                 ;;
-            cronhpa-controller|vpc-cni|p2p-accelerator)
+            cronhpa-controller|vpc-cni|p2p-accelerator|csi-disk|csi-oss|csi-nfs|node-agent|cloud-controller-manager|ingress-nginx|kubeprober)
                 local component="$1"
                 shift
                 
@@ -314,9 +322,14 @@ function main() {
                     log_info "用户输入参数: (无)"
                 fi
                 
-                # cronhpa-controller 和 vpc-cni 默认安装在 kube-system
+                # 确定目标命名空间
                 local target_ns="kube-system"
-                
+                if [[ "${component}" == "ingress-nginx" ]]; then
+                    target_ns="ingress-nginx"
+                elif [[ "${component}" == "kubeprober" ]]; then
+                    target_ns="kubeprober"
+                fi
+
                 log_step "开始卸载 ${component}"
                 
                 log_debug "检查组件 ${component} (${target_ns})..."
@@ -332,6 +345,16 @@ function main() {
                     log_warn "${component} 未安装在 ${target_ns} 命名空间"
                 fi
                 
+                # 如果是 kubeprober，提示 CRDs 保留信息
+                if [[ "${component}" == "kubeprober" ]]; then
+                    log_info ""
+                    log_info "KubeProber CRDs 仍然保留在集群中"
+                    log_info "如需删除 CRDs，请手动执行："
+                    log_info "  kubectl delete -f charts/kubeprober/crds/"
+                    log_info ""
+                    log_warn "注意：删除 CRDs 会同时删除所有相关的自定义资源（Probes、ProbeStatuses、Alerts）"
+                fi
+
                 log_step "✓ 卸载操作完成"
                 
                 # 日志文件结束标记

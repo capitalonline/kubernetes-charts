@@ -106,7 +106,14 @@ spec:
         runAsUser: 65534
       serviceAccountName: node-exporter
       tolerations:
-      - operator: Exists
+      - key: CriticalAddonsOnly
+        operator: Exists
+      - key: node-role.eks.net/infra
+        operator: Exists
+        effect: NoSchedule
+      - key: node-role.kubernetes.io/control-plane
+        operator: Exists
+        effect: NoSchedule
       volumes:
       - hostPath:
           path: /sys

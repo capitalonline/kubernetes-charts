@@ -1,0 +1,75 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: eks-cloud-controller-manager
+  namespace: kube-system
+  labels:
+    {{- include "cloud-controller-manager.labels" . | nindent 4 }}
+spec:
+  progressDeadlineSeconds: 30
+  replicas: 1
+  revisionHistoryLimit: 2
+  selector:
+    matchLabels:
+      app: eks-cloud-controller-manager
+      app.kubernetes.io/app-component: cloud-controller-manager
+  template:
+    metadata:
+      labels:
+        app: eks-cloud-controller-manager
+        app.kubernetes.io/app-component: cloud-controller-manager
+    spec:
+      containers:
+        - env:
+            - name: CDS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  key: access_key_id
+                  name: eks-secrets
+            - name: CDS_ACCESS_KEY_SECRET
+              valueFrom:
+                secretKeyRef:
+                  key: access_key_secret
+                  name: eks-secrets
+            - name: CDS_CLUSTER_ID
+              valueFrom:
+                configMapKeyRef:
+                  key: k8s_cluster_id
+                  name: cds-properties
+            - name: CDS_OVERSEA
+              valueFrom:
+                configMapKeyRef:
+                  name: cds-properties
+                  key: oversea
+            - name: CDS_API_SCHEMA
+              valueFrom:
+                configMapKeyRef:
+                  name: cds-properties
+                  key: openapi_schema
+            - name: CDS_API_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: cds-properties
+                  key: openapi_host
+            - name: CDS_LB_API_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: cds-properties
+                  key: lb_openapi_host
+            - name: CDS_VPC_ID
+              valueFrom:
+                configMapKeyRef:
+                  name: cds-properties
+                  key: vpc_id
+          image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          name: cds-cloud-controller-manager
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      dnsPolicy: Default
+      hostNetwork: true
+      serviceAccountName: {{ .Values.serviceAccount.name }}
+      affinity:
+        {{- toYaml .Values.affinity | nindent 8 }}
+      tolerations:
+        {{- toYaml .Values.tolerations | nindent 8 }}

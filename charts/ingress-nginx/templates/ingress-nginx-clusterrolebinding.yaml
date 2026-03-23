@@ -1,0 +1,50 @@
+{{- if .Values.rbac.create }}
+
+########################################
+# ClusterRoleBinding: controller
+########################################
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  labels:
+    app.kubernetes.io/instance: ingress-nginx
+    app.kubernetes.io/name: ingress-nginx
+    app.kubernetes.io/part-of: ingress-nginx
+    app.kubernetes.io/version: 1.7.1
+  name: {{ .Values.rbac.controllerClusterRoleBindingName }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ .Values.rbac.controllerClusterRoleName }}
+
+subjects:
+  - kind: ServiceAccount
+    name: {{ .Values.controller.serviceAccount.name }}
+    namespace: {{ .Values.namespace.name }}
+
+---
+########################################
+# ClusterRoleBinding: admission webhook
+########################################
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  labels:
+    app.kubernetes.io/component: admission-webhook
+    app.kubernetes.io/instance: ingress-nginx
+    app.kubernetes.io/name: ingress-nginx
+    app.kubernetes.io/part-of: ingress-nginx
+    app.kubernetes.io/version: 1.7.1
+  name: {{ .Values.rbac.admissionClusterRoleBindingName }}
+
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ .Values.rbac.admissionClusterRoleName }}
+
+subjects:
+  - kind: ServiceAccount
+    name: {{ .Values.controller.serviceAccount.admission.name }}
+    namespace: {{ .Values.namespace.name }}
+
+{{- end }}

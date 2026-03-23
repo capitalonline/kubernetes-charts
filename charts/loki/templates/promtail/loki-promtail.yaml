@@ -126,7 +126,14 @@ spec:
             - name: promtail-config
               mountPath: /etc/promtail
       tolerations:
-        - operator: Exists
+      - key: CriticalAddonsOnly
+        operator: Exists
+      - key: node-role.eks.net/infra
+        operator: Exists
+        effect: NoSchedule
+      - key: node-role.kubernetes.io/control-plane
+        operator: Exists
+        effect: NoSchedule
       volumes:
         - name: logs
           hostPath:

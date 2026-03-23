@@ -29,6 +29,10 @@ ingress:
     - k8s.prometheus
     - k8s_internal.prometheus
 
+flowIngress:
+  enabled: false
+  host: ""
+
 # ==========================================
 # Container Configuration (Unified Namespace)
 # ==========================================
@@ -36,48 +40,48 @@ container:
   # Prometheus main container
   prometheus:
     image:
-      repository: registry-bj.capitalonline.net/eks/prometheus
+      repository: capitalonline/prometheus
       tag: v2.46.0
   
   # Prometheus Operator
   prometheus-operator:
     image:
-      repository: registry-bj.capitalonline.net/eks/prometheus-operator
+      repository: capitalonline/prometheus-operator
       tag: v0.67.1
   
   # Config Reloader (Prometheus Operator sidecar)
   config-reloader:
     image:
-      repository: registry-bj.capitalonline.net/eks/prometheus-config-reloader
+      repository: capitalonline/prometheus-config-reloader
       tag: v0.67.1
   
   # Node Exporter - Node metrics collection
   node-exporter:
     image:
-      repository: registry-bj.capitalonline.net/eks/node-exporter
+      repository: capitalonline/node-exporter
       tag: v1.6.1
   
   # Kube State Metrics - K8s cluster state metrics
   kube-state-metrics:
     image:
-      repository: registry-bj.capitalonline.net/eks/kube-state-metrics
+      repository: capitalonline/kube-state-metrics
       tag: v2.9.2
   
   # Blackbox Exporter - Blackbox monitoring probe
   blackbox-exporter:
     image:
-      repository: registry-bj.capitalonline.net/eks/blackbox-exporter
+      repository: capitalonline/blackbox-exporter
       tag: v0.24.0
   
   # Module Configmap Reloader (Blackbox Exporter sidecar)
   module-configmap-reloader:
     image:
-      repository: registry-bj.capitalonline.net/eks/configmap-reload
+      repository: capitalonline/configmap-reload
       tag: v0.5.0
   
   # Kube RBAC Proxy (Shared sidecar for multiple components)
   kube-rbac-proxy:
     image:
-      repository: registry-bj.capitalonline.net/eks/kube-rbac-proxy
+      repository: capitalonline/kube-rbac-proxy
       tag: v0.14.2
 

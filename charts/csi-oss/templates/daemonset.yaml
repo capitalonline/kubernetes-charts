@@ -1,0 +1,137 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  labels:
+    app.kubernetes.io/app-component: csi-oss
+  name: oss-csi-cds-node
+  namespace: kube-system
+spec:
+  selector:
+    matchLabels:
+      app: oss-csi-cds-node
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/app-component: csi-oss
+        app: oss-csi-cds-node
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: node.kubernetes.io/host-type
+                operator: In
+                values:
+                - ecs
+                - bms
+      initContainers:
+        - name: install-oss-server
+          image: {{ index .Values.container "install-oss-server" "image" "repository" }}:{{ index .Values.container "install-oss-server" "image" "tag" }}
+          imagePullPolicy: {{ index .Values.container "install-oss-server" "image" "pullPolicy" }}
+          command:
+            - /bin/sh
+            - -c
+            - /install-oss.sh
+          securityContext:
+            privileged: true
+          volumeMounts:
+            - mountPath: /srv/
+              name: local-srv
+            - mountPath: /host/config/system/
+              name: systemd
+      containers:
+        - args:
+            - --endpoint=$(CSI_ENDPOINT)
+            - --v=5
+            - --driver=oss.csi.cds.net
+          env:
+            - name: CSI_ENDPOINT
+              value: unix://var/lib/kubelet/plugins/oss.csi.cds.net/csi.sock
+          image: {{ index .Values.container "oss-csi-node-server" "image" "repository" }}:{{ index .Values.container "oss-csi-node-server" "image" "tag" }}
+          imagePullPolicy: {{ index .Values.container "oss-csi-node-server" "image" "pullPolicy" }}
+          name: oss-csi-node-server
+          securityContext:
+            allowPrivilegeEscalation: true
+            capabilities:
+              add:
+                - SYS_ADMIN
+            privileged: true
+          volumeMounts:
+            - mountPath: /var/lib/kubelet/
+              name: kubelet-dir
+            - mountPath: /var/log/
+              name: host-log
+            - mountPath: /host/etc
+              name: etc
+            - mountPath: /var/run
+              mountPropagation: Bidirectional
+              name: run
+        - args:
+            - --v=5
+            - --csi-address=$(ADDRESS)
+            - --kubelet-registration-path=$(DRIVER_REG_SOCK_PATH)
+          env:
+            - name: ADDRESS
+              value: /var/lib/kubelet/plugins/oss.csi.cds.net/csi.sock
+            - name: DRIVER_REG_SOCK_PATH
+              value: /var/lib/kubelet/plugins/oss.csi.cds.net/csi.sock
+          image: {{ index .Values.container "oss-driver-registrar" "image" "repository" }}:{{ index .Values.container "oss-driver-registrar" "image" "tag" }}
+          imagePullPolicy: {{ index .Values.container "oss-driver-registrar" "image" "pullPolicy" }}
+          lifecycle:
+            preStop:
+              exec:
+                command:
+                  - /bin/sh
+                  - -c
+                  - rm -rf /registration/oss.csi.cds.net /registration/oss.csi.cds.net-reg.sock
+          name: oss-driver-registrar
+          volumeMounts:
+            - mountPath: /var/lib/kubelet/
+              name: kubelet-dir
+            - mountPath: /registration/
+              name: registration-dir
+        - args:
+            - --csi-address=/var/lib/kubelet/plugins/oss.csi.cds.net/csi.sock
+            - --health-port=9808
+          image: {{ index .Values.container "oss-liveness-probe" "image" "repository" }}:{{ index .Values.container "oss-liveness-probe" "image" "tag" }}
+          imagePullPolicy: {{ index .Values.container "oss-liveness-probe" "image" "pullPolicy" }}
+          name: oss-liveness-probe
+          volumeMounts:
+            - mountPath: /var/lib/kubelet/
+              name: kubelet-dir
+      hostNetwork: true
+      hostPID: true
+      priorityClassName: system-node-critical
+      serviceAccount: oss-cds-csi-sa
+      tolerations:
+        - operator: Exists
+      volumes:
+        - hostPath:
+            path: /var/lib/kubelet
+            type: Directory
+          name: kubelet-dir
+        - hostPath:
+            path: /var/lib/kubelet/plugins_registry
+            type: DirectoryOrCreate
+          name: registration-dir
+        - hostPath:
+            path: /var/log/
+          name: host-log
+        - hostPath:
+            path: /etc
+          name: etc
+        - hostPath:
+            path: /var/run/
+            type: DirectoryOrCreate
+          name: run
+        - hostPath:
+            path: /srv/
+            type: DirectoryOrCreate
+          name: local-srv
+        - hostPath:
+            path: /usr/lib/systemd/system/
+            type: ""
+          name: systemd
+  updateStrategy:
+    type: RollingUpdate
