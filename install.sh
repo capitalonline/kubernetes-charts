@@ -78,38 +78,19 @@ function print_help() {
   -l, --log                           保存日志到 /tmp 目录（自动生成文件名）
   -h, --help                          显示帮助信息
 
-命令:
-  prometheus [选项]                   安装 Prometheus（会自动初始化）
-  alertmanager [选项]                 安装 Alertmanager
-  grafana [选项]                      安装 Grafana
-  loki [选项]                         安装 Loki
-  dcgm-exporter                       安装 DCGM Exporter
-  prometheus-adapter                  安装 Prometheus Adapter
-  alertmanager-webhook-adapter        安装 Alertmanager Webhook Adapter
-  cronhpa-controller                  安装 CronHPA Controller
-  vpc-cni                             安装 VPC CNI 网络插件
-  p2p-accelerator                     安装 P2P Accelerator 镜像加速
-  all                                 安装所有组件（使用默认参数）
-
-命令选项:
-  请执行以下命令查看各组件的具体选项：
-    $0 <命令> --help
-  
-  或直接运行（会先同步代码，然后显示帮助）：
-    $0 --help
+说明:
+  所有命令和参数都会透传给 scripts/install-components.sh
+  详细的命令和选项请运行: $0 --help
 
 示例:
-  # 安装 Prometheus
+  # 安装单个组件
   $0 prometheus --retention 15d --storage-size 80Gi
 
-  # 查看 prometheus 命令的详细选项
-  $0 prometheus --help
+  # 批量安装多个组件
+  $0 --components csi-oss,csi-nfs,csi-disk
 
-  # 启用调试模式
-  $0 prometheus -d --retention 7d
-
-  # 安装所有组件
-  $0 all
+  # 查看详细帮助
+  $0 --help
 
 注意:
   - 代码会被同步到 ${CHARTS_REPO_DIR}
@@ -167,11 +148,12 @@ function main() {
     local has_command=false
     local component_name=""
     
-    # 解析参数
+    # 解析参数（只处理日志相关，其他全部透传）
     while [[ $# -gt 0 ]]; do
         case $1 in
             -l|--log)
                 ENABLE_LOG_FILE=true
+                all_args+=("$1")
                 shift
                 ;;
             -h|--help)
@@ -179,19 +161,13 @@ function main() {
                 sync_charts_repo
                 exec "${CHARTS_REPO_DIR}/scripts/install-components.sh" --help
                 ;;
-            prometheus|alertmanager|grafana|loki|dcgm-exporter|prometheus-adapter|alertmanager-webhook-adapter|cronhpa-controller|vpc-cni|p2p-accelerator|all)
-                has_command=true
-                component_name="$1"
-                all_args+=("$1")
-                shift
-                # 后续所有参数都传递给安装脚本
-                while [[ $# -gt 0 ]]; do
-                    all_args+=("$1")
-                    shift
-                done
-                ;;
             *)
-                # 其他参数收集起来传递给安装脚本
+                # 所有其他参数都透传给安装脚本
+                has_command=true
+                # 尝试提取组件名称用于日志文件名
+                if [[ -z "${component_name}" ]] && [[ ! "$1" =~ ^- ]]; then
+                    component_name="$1"
+                fi
                 all_args+=("$1")
                 shift
                 ;;
@@ -213,7 +189,7 @@ function main() {
     
     # 生成日志文件名（如果启用了日志）
     if [[ "${ENABLE_LOG_FILE}" == "true" ]]; then
-        LOG_FILE="/tmp/k8s-monitoring-install-${component_name}-$(date +%Y%m%d-%H%M%S).log"
+        LOG_FILE="/tmp/k8s-install-${component_name}-$(date +%Y%m%d-%H%M%S).log"
     fi
     
     # 初始化日志文件

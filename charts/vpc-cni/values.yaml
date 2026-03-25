@@ -109,28 +109,28 @@ container:
   # CNI Manager
   cni-manager:
     image:
-      repository: harbor-dev.yun-paas.com/dev/vpc-cni
+      repository: capitalonline/vpc-cni
       pullPolicy: Always
       tag: "v3.0.2"
   
   # VPC CNI Webhook
   vpc-cni-webhook:
     image:
-      repository: harbor-dev.yun-paas.com/dev/vpc-cni
+      repository: capitalonline/vpc-cni
       pullPolicy: Always
       tag: "v3.0.2"
   
   # CNI Daemon (DaemonSet main container)
   cni-daemon:
     image:
-      repository: harbor-dev.yun-paas.com/dev/vpc-cni
+      repository: capitalonline/vpc-cni
       pullPolicy: Always
       tag: "v3.0.2"
   
   # Install CNI (DaemonSet init container)
   install-cni:
     image:
-      repository: harbor-dev.yun-paas.com/dev/vpc-cni
+      repository: capitalonline/vpc-cni
       pullPolicy: Always
       tag: "v3.0.2"
 

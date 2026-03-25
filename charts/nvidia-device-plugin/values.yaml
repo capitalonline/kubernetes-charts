@@ -1,0 +1,81 @@
+# Default values for nvidia-device-plugin
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+# Image configuration
+image:
+  repository: capitalonline/k8s-device-plugin
+  tag: v0.14.0
+  pullPolicy: IfNotPresent
+
+# Image pull secrets
+imagePullSecrets: []
+
+# Namespace to deploy the plugin
+namespace: kube-system
+
+# DaemonSet configuration
+daemonset:
+  name: nvidia-device-plugin-daemonset
+  labels:
+    name: nvidia-device-plugin-ds
+  
+  # Update strategy
+  updateStrategy:
+    type: RollingUpdate
+  
+  # Priority class name for the pod
+  priorityClassName: system-node-critical
+
+# Pod configuration
+pod:
+  # Tolerations for GPU nodes
+  tolerations:
+    - key: nvidia.com/gpu
+      operator: Exists
+      effect: NoSchedule
+  
+  # Node selector
+  nodeSelector: {}
+  
+  # Affinity rules
+  affinity: {}
+
+# Container configuration
+container:
+  name: nvidia-device-plugin-ctr
+  
+  # Environment variables
+  env:
+    # Fail on initialization error
+    failOnInitError: "false"
+  
+  # Security context
+  securityContext:
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+        - ALL
+  
+  # Resource limits and requests
+  resources: {}
+    # limits:
+    #   cpu: 100m
+    #   memory: 128Mi
+    # requests:
+    #   cpu: 50m
+    #   memory: 64Mi
+
+# Volume configuration
+volumes:
+  devicePlugin:
+    hostPath: /var/lib/kubelet/device-plugins
+
+# Service Account
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: false
+  # The name of the service account to use
+  name: ""
+  # Annotations to add to the service account
+  annotations: {}

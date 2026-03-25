@@ -1,0 +1,68 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: node-agent
+  namespace: kube-system
+  labels:
+    app.kubernetes.io/app-component: node-agent
+    app.kubernetes.io/name: node-agent
+    app: node-agent
+spec:
+  selector:
+    matchLabels:
+      app: node-agent
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/app-component: node-agent
+        app.kubernetes.io/name: node-agent
+        app: node-agent
+    spec:
+      serviceAccountName: node-agent
+      hostPID: {{ .Values.security.hostPID }}
+      
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              # 排除 Master 和 Control Plane 节点，确保只在 Worker 节点运行
+              - key: {{ .Values.nodeSelector.controlPlane.key }}
+                operator: {{ .Values.nodeSelector.controlPlane.operator }}
+              - key: {{ .Values.nodeSelector.master.key }}
+                operator: {{ .Values.nodeSelector.master.operator }}
+
+      containers:
+      - name: agent
+        image: {{ .Values.container.agent.image.repository }}:{{ .Values.container.agent.image.tag }}
+        imagePullPolicy: {{ .Values.container.agent.image.pullPolicy }}
+        env:
+        # Downward API: 获取节点名称
+        - name: NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        # 预留系统资源
+        - name: KUBE_RESERVED_CPU
+          value: {{ quote .Values.nodeConfigAgent.kubeReserved.cpu }}
+        - name: KUBE_RESERVED_MEMORY
+          value: {{ quote .Values.nodeConfigAgent.kubeReserved.memory }}
+        # 监听的目标 Annotation Key
+        - name: TARGET_ANNOTATION_KEY
+          value: {{ quote .Values.nodeConfigAgent.targetAnnotationKey }}
+        # 宿主机路径映射
+        - name: HOST_KUBELET_DEFAULTS_PATH
+          value: {{ quote .Values.nodeConfigAgent.hostPaths.kubeletDefaults }}
+        - name: HOST_CPU_MANAGER_STATE_PATH
+          value: {{ quote .Values.nodeConfigAgent.hostPaths.cpuManagerState }}
+        securityContext:
+          privileged: {{ .Values.security.privileged }}
+        volumeMounts:
+        - name: host-root
+          mountPath: /host
+          readOnly: false
+      volumes:
+      - name: host-root
+        hostPath:
+          path: /
+          type: Directory

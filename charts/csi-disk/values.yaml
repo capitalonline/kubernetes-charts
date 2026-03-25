@@ -1,0 +1,92 @@
+# Default values for csi-disk.
+# This is a YAML-formatted file.
+# Declare variables to be substituted into your templates.
+
+# ==========================================
+# Host Aliases Configuration
+# ==========================================
+# hostAliases 用于配置 Pod 的 /etc/hosts 映射
+# 默认为空，可通过安装脚本传递参数配置
+hostAliases: []
+
+# ==========================================
+# Component Configuration
+# ==========================================
+# Note: Most component configurations are fixed in template files
+
+# Fixed values:
+# - namespace: kube-system
+# - driver name: eks-disk.csi.cds.net
+# - serviceAccount: eks-disk-cds-csi-sa
+# - controller: 
+#   - replicas: 1
+#   - nodeSelector: node-role.kubernetes.io/control-plane
+#   - priorityClassName: system-cluster-critical
+#   - tolerations: control-plane and infra nodes
+#   - resources: See deployment.yaml for container resources
+# - node:
+#   - priorityClassName: system-node-critical
+#   - tolerations: Exists (all taints)
+#   - nodeSelector: node.kubernetes.io/eks-disk-csi
+#   - resources: See daemonset.yaml for container resources
+# - RBAC: See clusterrole.yaml for full permissions
+
+# ==========================================
+# Container Configuration (Unified Namespace)
+# ==========================================
+container:
+  # CDS CSI Driver - Controller
+  csi-controller-server:
+    image:
+      repository: capitalonline/cds-csi-driver
+      pullPolicy: Always
+      tag: "v1.0.1-eks"
+
+  # CSI Provisioner
+  csi-provisioner:
+    image:
+      repository: capitalonline/csi-provisioner
+      pullPolicy: IfNotPresent
+      tag: "v3.1.0"
+
+  # CSI Attacher
+  csi-attacher:
+    image:
+      repository: capitalonline/csi-attacher
+      pullPolicy: IfNotPresent
+      tag: "v4.3.0"
+
+  # CSI Resizer
+  csi-resizer:
+    image:
+      repository: capitalonline/csi-resizer
+      pullPolicy: IfNotPresent
+      tag: "v1.9.0"
+
+  # Liveness Probe - Controller
+  liveness-probe-controller:
+    image:
+      repository: capitalonline/csi-livenessprobe
+      pullPolicy: IfNotPresent
+      tag: "v2.0.0"
+
+  # CDS CSI Driver - Node
+  eks-disk-csi-node-server:
+    image:
+      repository: capitalonline/cds-csi-driver
+      pullPolicy: Always
+      tag: "v1.0.1-eks"
+
+  # Node Driver Registrar
+  eks-disk-driver-registrar:
+    image:
+      repository: capitalonline/csi-node-driver-registrar
+      pullPolicy: Always
+      tag: "v1.2.0"
+
+  # Liveness Probe - Node
+  eks-disk-liveness-probe:
+    image:
+      repository: capitalonline/csi-livenessprobe
+      pullPolicy: IfNotPresent
+      tag: "v2.0.0"

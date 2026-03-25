@@ -18,6 +18,6 @@ container:
   # Grafana main container
   grafana:
     image:
-      repository: registry-bj.capitalonline.net/eks/grafana
+      repository: capitalonline/grafana
       tag: 10.3.1
 

@@ -89,8 +89,15 @@ function print_help() {
   cronhpa-controller                  卸载 CronHPA Controller
   vpc-cni                             卸载 VPC CNI 网络插件
   p2p-accelerator                     卸载 P2P Accelerator 镜像加速
+  csi-disk                            卸载 CSI Disk 存储插件
+  csi-oss                             卸载 CSI OSS 对象存储插件
+  csi-nfs                             卸载 CSI NFS 驱动
+  node-agent                          卸载节点代理
+  cloud-controller-manager            卸载云控制器
+  ingress-nginx                       卸载 ingress-nginx 插件
   all                                 卸载所有组件（所有命名空间）
   clean                               清理 secrets 和命名空间
+  kubeprober                          卸载 kubeprober
 
 命令选项:
   请执行以下命令查看详细选项：
@@ -168,7 +175,6 @@ function main() {
     
     # 收集所有参数，用于传递给真正的卸载脚本
     local all_args=()
-    local has_command=false
     local component_name=""
     
     # 解析参数
@@ -183,17 +189,6 @@ function main() {
                 sync_charts_repo
                 exec "${CHARTS_REPO_DIR}/scripts/uninstall-components.sh" --help
                 ;;
-            prometheus|alertmanager|grafana|loki|dcgm-exporter|prometheus-adapter|alertmanager-webhook-adapter|cronhpa-controller|vpc-cni|p2p-accelerator|clean)
-                has_command=true
-                component_name="$1"
-                all_args+=("$1")
-                shift
-                # 后续所有参数都传递给卸载脚本
-                while [[ $# -gt 0 ]]; do
-                    all_args+=("$1")
-                    shift
-                done
-                ;;
             *)
                 # 其他参数收集起来传递给卸载脚本
                 all_args+=("$1")
@@ -202,9 +197,17 @@ function main() {
         esac
     done
     
-    # 检查是否有命令
-    if [[ "${has_command}" == "false" ]]; then
-        log_error "未指定卸载命令"
+    # 取第一个非参数作为组件名（仅用于日志）
+    for arg in "${all_args[@]}"; do
+        if [[ ! "$arg" =~ ^- ]]; then
+            component_name="$arg"
+            break
+        fi
+    done
+
+    # 如果没有组件名
+    if [[ -z "${component_name}" ]]; then
+        log_error "未指定卸载组件"
         echo ""
         print_help
         exit 1
@@ -217,7 +220,7 @@ function main() {
     
     # 生成日志文件名（如果启用了日志）
     if [[ "${ENABLE_LOG_FILE}" == "true" ]]; then
-        LOG_FILE="/tmp/k8s-monitoring-uninstall-${component_name}-$(date +%Y%m%d-%H%M%S).log"
+        LOG_FILE="/tmp/k8s-uninstall-${component_name}-$(date +%Y%m%d-%H%M%S).log"
     fi
     
     # 初始化日志文件

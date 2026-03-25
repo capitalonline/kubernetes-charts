@@ -55,7 +55,7 @@ spec:
               fieldPath: status.hostIP
         image: {{ index .Values.container "p2p-accelerator-registry" "image" "repository" }}:{{ index .Values.container "p2p-accelerator-registry" "image" "tag" }}
         imagePullPolicy: {{ index .Values.container "p2p-accelerator-registry" "image" "pullPolicy" }}
-        name: registry
+        name: p2p-accelerator-registry
         ports:
         - containerPort: 5000
           hostPort: 30020
@@ -67,27 +67,9 @@ spec:
         - containerPort: 9090
           name: metrics
           protocol: TCP
-        readinessProbe:
-          failureThreshold: 3
-          httpGet:
-            path: /healthz
-            port: registry
-            scheme: HTTP
-          periodSeconds: 10
-          successThreshold: 1
-          timeoutSeconds: 1
         resources: {}
         securityContext:
           readOnlyRootFilesystem: true
-        startupProbe:
-          failureThreshold: 60
-          httpGet:
-            path: /healthz
-            port: registry
-            scheme: HTTP
-          periodSeconds: 3
-          successThreshold: 1
-          timeoutSeconds: 1
         terminationMessagePath: /dev/termination-log
         terminationMessagePolicy: File
         volumeMounts:
@@ -96,6 +78,33 @@ spec:
         - mountPath: /var/lib/containerd/io.containerd.content.v1.content
           name: containerd-content
           readOnly: true
+        livenessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /livez
+            port: registry
+            scheme: HTTP
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 1
+        readinessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /readyz
+            port: registry
+            scheme: HTTP
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 1
+        startupProbe:
+          failureThreshold: 60
+          httpGet:
+            path: /readyz
+            port: registry
+            scheme: HTTP
+          periodSeconds: 3
+          successThreshold: 1
+          timeoutSeconds: 1
       dnsPolicy: ClusterFirst
       initContainers:
       - args:
@@ -137,13 +146,6 @@ spec:
       serviceAccount: p2p-accelerator
       serviceAccountName: p2p-accelerator
       terminationGracePeriodSeconds: 30
-      tolerations:
-      - key: CriticalAddonsOnly
-        operator: Exists
-      - effect: NoExecute
-        operator: Exists
-      - effect: NoSchedule
-        operator: Exists
       volumes:
       - hostPath:
           path: /run/containerd/containerd.sock

@@ -1,0 +1,61 @@
+apiVersion: kubeprober.erda.cloud/v1
+kind: Probe
+metadata:
+  name: k8s
+  namespace: kubeprober
+spec:
+  policy:
+    # unit: minute
+    runInterval: 15
+  template:
+    containers:
+      - env:
+          - name: NODE_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: spec.nodeName
+          - name: KEEP_COMPLETED_PODS
+            value: "3"  # 保留最新的 3 个 Completed Pod
+        name: k8s
+        image: capitalonline/kubeprober/probe-k8s:v1.0.0
+        resources:
+          requests:
+            cpu: 10m
+            memory: 50Mi
+        # 挂载证书目录
+        volumeMounts:
+          - name: k8s-certs
+            mountPath: /etc/kubernetes/pki
+            readOnly: true
+    restartPolicy: Never
+    # 挂载宿主机的证书目录
+    volumes:
+      - name: k8s-certs
+        hostPath:
+          path: /etc/kubernetes/pki
+          type: DirectoryOrCreate
+    # 确保在 Master 节点运行
+    nodeSelector:
+      node-role.kubernetes.io/control-plane: ""  # 或 node-role.kubernetes.io/master: ""
+    # 容忍 Master 节点的污点
+    tolerations:
+      - key: node-role.kubernetes.io/control-plane
+        effect: NoSchedule
+      - key: node-role.kubernetes.io/master
+        effect: NoSchedule
+      - key: node-role.eks.net/infra
+        effect: NoSchedule
+  configs:
+    - name: control-plane
+      env:
+        - name: CHECK_IMAGE
+          value: "capitalonline/nginx-unprivileged:1.17.8"
+        - name: PRIVATE_DOMAIN
+          value: "kubernetes.default"
+        - name: DNS_CHECK_NAMESPACE
+          value: "kube-system"
+        - name: DNS_NODE_SELECTOR
+          value: "k8s-app=kube-dns"
+        - name: PUBLIC_DOMAIN
+          value: "www.baidu.com"
+    - name: system

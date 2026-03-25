@@ -92,7 +92,7 @@ function print_help() {
 示例:
   # 更新 cronhpa-controller 镜像（Deployment）
   $0 cronhpa-controller -c cronhpa-controller \\
-    -i harbor-dev.yun-paas.com/dev/kubernetes-cronhpa-controller:v1.1.0 \\
+    -i capitalonline/kubernetes-cronhpa-controller:v1.1.0 \\
     -n kube-system -k Deployment
 
   # 更新 Prometheus Node Exporter（DaemonSet）
@@ -169,7 +169,7 @@ function main() {
         case $1 in
             -l|--log)
                 ENABLE_LOG_FILE=true
-                all_args+=("$1")
+                # 不要将 -l 参数传递给子脚本
                 shift
                 ;;
             -h|--help)
@@ -221,10 +221,12 @@ function main() {
         # 写入日志头部
         echo "======================================" >> "${LOG_FILE}"
         echo "Kubernetes 镜像更新日志" >> "${LOG_FILE}"
-        echo "Release: ${release_name:-N/A}" >> "${LOG_FILE}"
+        echo "Release: ${release_name:-unknown}" >> "${LOG_FILE}"
         echo "开始时间: $(date '+%Y-%m-%d %H:%M:%S')" >> "${LOG_FILE}"
         echo "======================================" >> "${LOG_FILE}"
         echo "" >> "${LOG_FILE}"
+        
+        log_info "日志将保存到: ${LOG_FILE}"
     fi
     
     # 同步代码仓库
@@ -236,7 +238,6 @@ function main() {
     
     # 如果启用了日志，传递日志文件路径给更新脚本
     if [[ "${ENABLE_LOG_FILE}" == "true" ]]; then
-        log_info "日志将保存到: ${LOG_FILE}"
         exec "${CHARTS_REPO_DIR}/scripts/update-container-image.sh" --log-file "${LOG_FILE}" "${all_args[@]}"
     else
         exec "${CHARTS_REPO_DIR}/scripts/update-container-image.sh" "${all_args[@]}"

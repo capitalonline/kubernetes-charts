@@ -1,0 +1,17 @@
+apiVersion: v2
+name: kubeprober
+description: A Helm chart for KubeProber - Kubernetes cluster diagnostic tool
+type: application
+version: 0.1.0
+appVersion: "v1.0.0"
+keywords:
+  - kubernetes
+  - monitoring
+  - diagnostics
+  - probe
+  - health-check
+home: https://github.com/erda-project/kubeprober
+maintainers:
+  - name: kubeprober
+sources:
+  - https://github.com/erda-project/kubeprober

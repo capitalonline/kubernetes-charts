@@ -83,7 +83,8 @@ spec:
         runAsUser: 65534
       serviceAccountName: nvidia-gpu-exporter
       tolerations:
-      - operator: Exists
+      - key: CriticalAddonsOnly
+        operator: Exists
       volumes:
       - hostPath:
           path: /proc

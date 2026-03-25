@@ -1,0 +1,6 @@
+apiVersion: v2
+name: node-agent
+description: Kubernetes Node Configuration Agent for CPU binding and kubelet configuration
+type: application
+version: 1.0.0
+appVersion: "1.3"

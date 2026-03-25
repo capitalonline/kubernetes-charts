@@ -1,0 +1,81 @@
+{{- if .Values.controller.service.create }}
+
+########################################
+# Service: ingress-nginx controller
+########################################
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app.kubernetes.io/component: controller
+    app.kubernetes.io/instance: ingress-nginx
+    app.kubernetes.io/name: ingress-nginx
+    app.kubernetes.io/part-of: ingress-nginx
+    app.kubernetes.io/version: 1.7.1
+  {{- if .Values.controller.service.annotations }}
+  annotations:
+    {{- range $key, $value := .Values.controller.service.annotations }}
+    {{ $key }}: "{{ $value }}"
+    {{- end }}
+  {{- end }}
+  name: {{ .Values.controller.service.name }}
+  namespace: {{ .Values.namespace.name }}
+
+spec:
+  externalTrafficPolicy: {{ .Values.controller.service.externalTrafficPolicy }}
+  ipFamilies:
+    - IPv4
+  ipFamilyPolicy: {{ .Values.controller.service.ipFamilyPolicy }}
+
+  ports:
+    - appProtocol: http
+      name: http
+      port: {{ .Values.controller.service.port.http }}
+      protocol: TCP
+      targetPort: http
+      nodePort: {{ .Values.controller.service.nodePorts.http }}
+    - appProtocol: https
+      name: https
+      port: {{ .Values.controller.service.port.https }}
+      protocol: TCP
+      targetPort: https
+      nodePort: {{ .Values.controller.service.nodePorts.https }}
+
+  selector:
+    app.kubernetes.io/component: controller
+    app.kubernetes.io/instance: ingress-nginx
+    app.kubernetes.io/name: ingress-nginx
+
+  type: {{ .Values.controller.service.type }}
+
+---
+########################################
+# Service: admission webhook
+########################################
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app.kubernetes.io/component: controller
+    app.kubernetes.io/instance: ingress-nginx
+    app.kubernetes.io/name: ingress-nginx
+    app.kubernetes.io/part-of: ingress-nginx
+    app.kubernetes.io/version: 1.7.1
+  name: {{ .Values.controller.admissionWebhooks.service.name }}
+  namespace: {{ .Values.namespace.name }}
+
+spec:
+  ports:
+    - appProtocol: https
+      name: https-webhook
+      port: {{ .Values.controller.admissionWebhooks.service.port }}
+      targetPort: webhook
+
+  selector:
+    app.kubernetes.io/component: controller
+    app.kubernetes.io/instance: ingress-nginx
+    app.kubernetes.io/name: ingress-nginx
+
+  type: ClusterIP
+
+{{- end }}

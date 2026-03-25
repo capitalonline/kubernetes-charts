@@ -1,0 +1,19 @@
+apiVersion: v2
+name: csi-oss
+description: A Helm chart for CDS CSI OSS Driver - Kubernetes CSI Driver for Object Storage
+type: application
+version: 0.1.0
+appVersion: "v2.1.2"
+keywords:
+  - kubernetes
+  - csi
+  - storage
+  - oss
+  - object-storage
+  - cds
+  - capital-online
+home: https://github.com/capitalonline/csi-oss
+maintainers:
+  - name: capital-online
+sources:
+  - https://github.com/capitalonline/csi-oss

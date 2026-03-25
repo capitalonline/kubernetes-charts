@@ -55,9 +55,9 @@ helm uninstall dcgm-exporter -n monitoring
 
 | 参数 | 描述 | 默认值 |
 |------|------|--------|
-| `dcgmExporter.image.repository` | DCGM Exporter 镜像仓库 | `registry-bj.capitalonline.net/eks/dcgm-exporter` |
+| `dcgmExporter.image.repository` | DCGM Exporter 镜像仓库 | `capitalonline/dcgm-exporter` |
 | `dcgmExporter.image.tag` | DCGM Exporter 镜像标签 | `3.3.8-3.6.0-ubuntu22.04-v3` |
-| `dcgmExporter.rbacProxy.image.repository` | Kube RBAC Proxy 镜像仓库 | `registry-bj.capitalonline.net/eks/kube-rbac-proxy` |
+| `dcgmExporter.rbacProxy.image.repository` | Kube RBAC Proxy 镜像仓库 | `capitalonline/kube-rbac-proxy` |
 | `dcgmExporter.rbacProxy.image.tag` | Kube RBAC Proxy 镜像标签 | `v0.14.2` |
 
 ## 自定义安装
@@ -102,8 +102,8 @@ helm install dcgm-exporter ./charts/dcgm-exporter -n monitoring -f my-values.yam
 
 ### 镜像
 
-- DCGM Exporter: `registry-bj.capitalonline.net/eks/dcgm-exporter:3.3.8-3.6.0-ubuntu22.04-v3`
-- Kube RBAC Proxy: `registry-bj.capitalonline.net/eks/kube-rbac-proxy:v0.14.2`
+- DCGM Exporter: `capitalonline/dcgm-exporter:3.3.8-3.6.0-ubuntu22.04-v3`
+- Kube RBAC Proxy: `capitalonline/kube-rbac-proxy:v0.14.2`
 
 ### 收集的 GPU 指标
 

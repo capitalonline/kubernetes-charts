@@ -1,0 +1,121 @@
+# Default values for kubeprober.
+# This is a YAML-formatted file.
+# Declare variables to be substituted into your templates.
+
+# ==========================================
+# Namespace Configuration
+# ==========================================
+# Fixed namespace: kubeprober
+
+# ==========================================
+# Probe Agent Configuration
+# ==========================================
+probeAgent:
+  # Number of replicas for probe-agent deployment
+  replicas: 1
+  
+  # Probe agent image configuration
+  image:
+    repository: capitalonline/probe-agent
+    pullPolicy: Always
+    tag: "v1.0.0"
+  
+  # Resource limits and requests
+  resources:
+    limits:
+      cpu: 100m
+      memory: 100Mi
+    requests:
+      cpu: 100m
+      memory: 20Mi
+  
+  # Probe configuration
+  config:
+    # Listen address for probe status API
+    listenAddr: ":8082"
+    # Debug level (0-5, higher = more verbose)
+    debugLevel: 1
+  
+  # Service configuration
+  service:
+    type: ClusterIP
+    ports:
+      probeStatus:
+        port: 8082
+        targetPort: 8082
+      health:
+        port: 8080
+        targetPort: 8080
+      pprof:
+        port: 8090
+        targetPort: 8090
+      metrics:
+        port: 8000
+        targetPort: 8000
+  
+  # Health check configuration
+  livenessProbe:
+    httpGet:
+      path: /healthz
+      port: 8000
+    initialDelaySeconds: 15
+    periodSeconds: 20
+  
+  readinessProbe:
+    httpGet:
+      path: /readyz
+      port: 8000
+    initialDelaySeconds: 5
+    periodSeconds: 10
+
+# ==========================================
+# NSEnter DaemonSet Configuration
+# ==========================================
+# NSEnter provides host-level access for diagnostics
+nsenter:
+  # NSEnter image configuration
+  image:
+    repository: capitalonline/alpine
+    pullPolicy: Always
+    tag: "v3.9"
+  
+  # Resource limits and requests
+  resources:
+    limits:
+      cpu: 100m
+      memory: 100Mi
+    requests:
+      cpu: 100m
+      memory: 20Mi
+  
+  # Run on all nodes including master
+  tolerations:
+    - key: ""
+      operator: Exists
+  
+  # Use host network and PID namespace
+  hostNetwork: true
+  hostPID: true
+
+# ==========================================
+# RBAC Configuration
+# ==========================================
+# ServiceAccount names
+serviceAccount:
+  # Main probe agent service account
+  probeAgent: kubeprober
+  # Worker service account for probe execution
+  worker: kubeprober-worker
+
+# ==========================================
+# Extra Configuration
+# ==========================================
+# Additional environment variables or configuration
+extraConfig: {}
+  # Example:
+  # MY_CUSTOM_VAR: "value"
+  # ANOTHER_VAR: "another_value"
+
+alertToken: ""
+env: ""
+customerId: ""

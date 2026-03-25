@@ -58,6 +58,13 @@ data:
             "pod":
               "resource": "pod"
       "window": "5m"
+    externalRules:
+    - seriesQuery: '{__name__="queue_consumer_lag",name!=""}'
+      metricsQuery: sum(<<.Series>>{<<.LabelMatchers>>}) by (name)
+    - seriesQuery: '{__name__="queue_depth",topic!=""}'
+      metricsQuery: sum(<<.Series>>{<<.LabelMatchers>>}) by (name)
+      resources:
+        namespaced: false
 kind: ConfigMap
 metadata:
   labels:

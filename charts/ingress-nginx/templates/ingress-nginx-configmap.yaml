@@ -1,0 +1,18 @@
+{{- if .Values.controller.config.create }}
+
+apiVersion: v1
+data:
+  allow-snippet-annotations: "{{ .Values.controller.config.allowSnippetAnnotations }}"
+kind: ConfigMap
+metadata:
+  labels:
+    app.kubernetes.io/component: controller
+    app.kubernetes.io/instance: ingress-nginx
+    app.kubernetes.io/name: ingress-nginx
+    app.kubernetes.io/part-of: ingress-nginx
+    app.kubernetes.io/version: 1.7.1
+  name: {{ .Values.controller.config.name }}
+  namespace: {{ .Values.namespace.name }}
+
+{{- end }}
+

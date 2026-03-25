@@ -10,12 +10,12 @@ container:
   # DCGM Exporter main container (NVIDIA GPU monitoring)
   dcgm-exporter:
     image:
-      repository: registry-bj.capitalonline.net/eks/dcgm-exporter
+      repository: capitalonline/dcgm-exporter
       tag: 3.3.8-3.6.0-ubuntu22.04-v3
   
   # Kube RBAC Proxy (sidecar)
   kube-rbac-proxy:
     image:
-      repository: registry-bj.capitalonline.net/eks/kube-rbac-proxy
+      repository: capitalonline/kube-rbac-proxy
       tag: v0.14.2
 

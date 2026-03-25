@@ -1,0 +1,64 @@
+# Default values for cloud-controller-manager
+image:
+  repository: capitalonline/eks-cloud-controller-manager
+  tag: v1.1.0-dev
+  pullPolicy: Always
+
+serviceAccount:
+  create: true
+  name: cloud-controller-manager
+
+rbac:
+  create: true
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 100Mi
+
+env:
+  CDS_ACCESS_KEY_ID: ""
+  CDS_ACCESS_KEY_SECRET: ""
+  CDS_CLUSTER_ID: ""
+  CDS_OVERSEA: ""
+  CDS_API_SCHEMA: ""
+  CDS_API_HOST: ""
+  CDS_LB_API_HOST: ""
+  CDS_VPC_ID: ""
+
+affinity:
+  nodeAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: node-role.kubernetes.io/control-plane
+              operator: Exists
+  podAntiAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      - labelSelector:
+          matchExpressions:
+            - key: app
+              operator: In
+              values:
+                - eks-cloud-controller-manager
+        topologyKey: kubernetes.io/hostname
+
+tolerations:
+  - key: node-role.kubernetes.io/control-plane
+    effect: NoSchedule
+    operator: Exists
+  - key: node-role.eks.net/infra
+    operator: Exists
+    effect: NoSchedule
+  - effect: NoExecute
+    key: node.kubernetes.io/not-ready
+    operator: Exists
+    tolerationSeconds: 30
+  - effect: NoExecute
+    key: node.kubernetes.io/unreachable
+    operator: Exists
+    tolerationSeconds: 30
+  - key: node.cloudprovider.kubernetes.io/uninitialized
+    operator: Exists
+  - key: node-role.kubernetes.io/control-plane
+    operator: Exists
