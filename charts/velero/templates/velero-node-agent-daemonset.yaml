@@ -1,0 +1,83 @@
+{{- if .Values.nodeAgent.enabled }}
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: node-agent
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/app-component: velero
+    app: velero
+    component: node-agent
+spec:
+  selector:
+    matchLabels:
+      app: velero
+      component: node-agent
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/app-component: velero
+        app: velero
+        component: node-agent
+    spec:
+      serviceAccountName: {{ .Values.serviceAccount.name }}
+      securityContext:
+        runAsUser: 0
+      {{- if .Values.nodeAgent.tolerations }}
+      tolerations:
+        {{- toYaml .Values.nodeAgent.tolerations | nindent 8 }}
+      {{- end }}
+      volumes:
+        - name: host-pods
+          hostPath:
+            path: {{ .Values.nodeAgent.podVolumePath }}
+        - name: scratch
+          emptyDir: {}
+        {{- if .Values.credentials.useSecret }}
+        - name: credentials
+          secret:
+            secretName: {{ .Values.credentials.name }}
+        {{- end }}
+      containers:
+        - name: node-agent
+          image: {{ .Values.container.velero.image.repository }}:{{ .Values.container.velero.image.tag }}
+          imagePullPolicy: {{ .Values.container.velero.image.pullPolicy }}
+          command:
+            - /velero
+          args:
+            - node-agent
+            - server
+            {{- if .Values.configuration.features }}
+            - --features={{ .Values.configuration.features }}
+            {{- end }}
+          env:
+            - name: TZ
+              value: "Asia/Shanghai"
+            - name: NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+            - name: VELERO_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            {{- if .Values.credentials.useSecret }}
+            - name: AWS_SHARED_CREDENTIALS_FILE
+              value: /credentials/cloud
+            {{- end }}
+          volumeMounts:
+            - name: host-pods
+              mountPath: /host_pods
+              mountPropagation: HostToContainer
+            - name: scratch
+              mountPath: /scratch
+            {{- if .Values.credentials.useSecret }}
+            - name: credentials
+              mountPath: /credentials
+              readOnly: true
+            {{- end }}
+          resources:
+            {{- toYaml .Values.nodeAgent.resources | nindent 12 }}
+          securityContext:
+            privileged: false
+{{- end }}
