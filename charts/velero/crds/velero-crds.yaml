@@ -23,33 +23,92 @@ spec:
       schema:
         openAPIV3Schema:
           type: object
-          x-kubernetes-preserve-unknown-fields: true
-      subresources:
-        status: {}
+          properties:
+            spec:
+              type: object
+              x-kubernetes-preserve-unknown-fields: true
+            status:
+              type: object
+              properties:
+                phase:
+                  type: string
+                  description: "Backup phase (New, InProgress, Uploading, Uploading, Completed, PartiallyFailed, Failed, Deleting)"
+                errors:
+                  type: integer
+                  description: "Number of errors encountered during backup"
+                warnings:
+                  type: integer
+                  description: "Number of warnings encountered during backup"
+                startTimestamp:
+                  type: string
+                  format: date-time
+                  description: "Time when the backup started"
+                completionTimestamp:
+                  type: string
+                  format: date-time
+                  description: "Time when the backup completed"
+                expiration:
+                  type: string
+                  format: date-time
+                  description: "Time when the backup expires"
+                version:
+                  type: integer
+                  description: "Backup format version"
+                progress:
+                  type: object
+                  properties:
+                    totalItems:
+                      type: integer
+                    itemsBackedUp:
+                      type: integer
+                  x-kubernetes-preserve-unknown-fields: true
+                validationErrors:
+                  type: array
+                  items:
+                    type: string
+                  nullable: true
+                formatVersion:
+                  type: string
+                csiVolumeSnapshotsAttempted:
+                  type: integer
+                csiVolumeSnapshotsCompleted:
+                  type: integer
+                failureReason:
+                  type: string
+                hookStatus:
+                  type: object
+                  x-kubernetes-preserve-unknown-fields: true
+                backupItemOperationsAttempted:
+                  type: integer
+                backupItemOperationsCompleted:
+                  type: integer
+                backupItemOperationsFailed:
+                  type: integer
+              x-kubernetes-preserve-unknown-fields: true
       additionalPrinterColumns:
         - name: STATUS
           type: string
-          description: Backup 状态
+          description: Backup status
           jsonPath: .status.phase
         - name: ERRORS
           type: integer
-          description: 错误数
+          description: Number of errors
           jsonPath: .status.errors
         - name: WARNINGS
           type: integer
-          description: 警告数
+          description: Number of warnings
           jsonPath: .status.warnings
         - name: CREATED
           type: date
-          description: 备份开始时间
+          description: Backup start time
           jsonPath: .status.startTimestamp
         - name: EXPIRES
           type: date
-          description: 过期时间
+          description: Expiration time
           jsonPath: .status.expiration
         - name: STORAGE LOCATION
           type: string
-          description: 备份存储位置
+          description: Backup storage location
           jsonPath: .spec.storageLocation
         - name: AGE
           type: date
@@ -79,9 +138,21 @@ spec:
       schema:
         openAPIV3Schema:
           type: object
-          x-kubernetes-preserve-unknown-fields: true
-      subresources:
-        status: {}
+          properties:
+            spec:
+              type: object
+              x-kubernetes-preserve-unknown-fields: true
+            status:
+              type: object
+              properties:
+                phase:
+                  type: string
+                lastMaintenanceTime:
+                  type: string
+                  format: date-time
+                message:
+                  type: string
+              x-kubernetes-preserve-unknown-fields: true
       additionalPrinterColumns:
         - name: AGE
           type: date
@@ -116,17 +187,37 @@ spec:
       schema:
         openAPIV3Schema:
           type: object
-          x-kubernetes-preserve-unknown-fields: true
-      subresources:
-        status: {}
+          properties:
+            spec:
+              type: object
+              x-kubernetes-preserve-unknown-fields: true
+            status:
+              type: object
+              properties:
+                phase:
+                  type: string
+                  description: "BSL phase (Available, Unavailable)"
+                lastValidationTime:
+                  type: string
+                  format: date-time
+                lastSyncedTime:
+                  type: string
+                  format: date-time
+                lastSyncedRevision:
+                  type: string
+                accessMode:
+                  type: string
+                message:
+                  type: string
+              x-kubernetes-preserve-unknown-fields: true
       additionalPrinterColumns:
         - name: PHASE
           type: string
-          description: 连接状态
+          description: Connection status
           jsonPath: .status.phase
         - name: LAST VALIDATED
           type: date
-          description: 最近验证时间
+          description: Last validation time
           jsonPath: .status.lastValidationTime
         - name: AGE
           type: date
@@ -159,9 +250,21 @@ spec:
       schema:
         openAPIV3Schema:
           type: object
-          x-kubernetes-preserve-unknown-fields: true
-      subresources:
-        status: {}
+          properties:
+            spec:
+              type: object
+              x-kubernetes-preserve-unknown-fields: true
+            status:
+              type: object
+              properties:
+                phase:
+                  type: string
+                errors:
+                  type: array
+                  items:
+                    type: string
+                  nullable: true
+              x-kubernetes-preserve-unknown-fields: true
       additionalPrinterColumns:
         - name: AGE
           type: date
@@ -197,9 +300,21 @@ spec:
       schema:
         openAPIV3Schema:
           type: object
-          x-kubernetes-preserve-unknown-fields: true
-      subresources:
-        status: {}
+          properties:
+            spec:
+              type: object
+              x-kubernetes-preserve-unknown-fields: true
+            status:
+              type: object
+              properties:
+                phase:
+                  type: string
+                downloadURL:
+                  type: string
+                expiration:
+                  type: string
+                  format: date-time
+              x-kubernetes-preserve-unknown-fields: true
       additionalPrinterColumns:
         - name: AGE
           type: date
@@ -232,9 +347,29 @@ spec:
       schema:
         openAPIV3Schema:
           type: object
-          x-kubernetes-preserve-unknown-fields: true
-      subresources:
-        status: {}
+          properties:
+            spec:
+              type: object
+              x-kubernetes-preserve-unknown-fields: true
+            status:
+              type: object
+              properties:
+                phase:
+                  type: string
+                startTimestamp:
+                  type: string
+                  format: date-time
+                completionTimestamp:
+                  type: string
+                  format: date-time
+                progress:
+                  type: object
+                  x-kubernetes-preserve-unknown-fields: true
+                message:
+                  type: string
+                snapshotID:
+                  type: string
+              x-kubernetes-preserve-unknown-fields: true
       additionalPrinterColumns:
         - name: AGE
           type: date
@@ -267,9 +402,27 @@ spec:
       schema:
         openAPIV3Schema:
           type: object
-          x-kubernetes-preserve-unknown-fields: true
-      subresources:
-        status: {}
+          properties:
+            spec:
+              type: object
+              x-kubernetes-preserve-unknown-fields: true
+            status:
+              type: object
+              properties:
+                phase:
+                  type: string
+                startTimestamp:
+                  type: string
+                  format: date-time
+                completionTimestamp:
+                  type: string
+                  format: date-time
+                progress:
+                  type: object
+                  x-kubernetes-preserve-unknown-fields: true
+                message:
+                  type: string
+              x-kubernetes-preserve-unknown-fields: true
       additionalPrinterColumns:
         - name: AGE
           type: date
@@ -302,33 +455,66 @@ spec:
       schema:
         openAPIV3Schema:
           type: object
-          x-kubernetes-preserve-unknown-fields: true
-      subresources:
-        status: {}
+          properties:
+            spec:
+              type: object
+              x-kubernetes-preserve-unknown-fields: true
+            status:
+              type: object
+              properties:
+                phase:
+                  type: string
+                errors:
+                  type: integer
+                warnings:
+                  type: integer
+                startTimestamp:
+                  type: string
+                  format: date-time
+                completionTimestamp:
+                  type: string
+                  format: date-time
+                validationErrors:
+                  type: array
+                  items:
+                    type: string
+                  nullable: true
+                progress:
+                  type: object
+                  x-kubernetes-preserve-unknown-fields: true
+                failureReason:
+                  type: string
+                restoreItemOperationsAttempted:
+                  type: integer
+                restoreItemOperationsCompleted:
+                  type: integer
+                restoreItemOperationsFailed:
+                  type: integer
+              x-kubernetes-preserve-unknown-fields: true
       additionalPrinterColumns:
         - name: BACKUP
           type: string
-          description: 关联的备份名称
+          description: Associated backup name
           jsonPath: .spec.backupName
         - name: STATUS
           type: string
-          description: 恢复状态
+          description: Restore status
           jsonPath: .status.phase
         - name: STARTED
           type: date
-          description: 开始时间
+          description: Start time
           jsonPath: .status.startTimestamp
         - name: COMPLETED
           type: date
-          description: 完成时间
+          description: Completion time
           jsonPath: .status.completionTimestamp
         - name: ERRORS
           type: integer
-          description: 错误数
+          description: Number of errors
           jsonPath: .status.errors
         - name: WARNINGS
           type: integer
-          description: 警告数
+          description: Number of warnings
           jsonPath: .status.warnings
         - name: AGE
           type: date
@@ -358,25 +544,40 @@ spec:
       schema:
         openAPIV3Schema:
           type: object
-          x-kubernetes-preserve-unknown-fields: true
-      subresources:
-        status: {}
+          properties:
+            spec:
+              type: object
+              x-kubernetes-preserve-unknown-fields: true
+            status:
+              type: object
+              properties:
+                phase:
+                  type: string
+                lastBackup:
+                  type: string
+                  format: date-time
+                validationErrors:
+                  type: array
+                  items:
+                    type: string
+                  nullable: true
+              x-kubernetes-preserve-unknown-fields: true
       additionalPrinterColumns:
         - name: STATUS
           type: string
-          description: 调度状态
+          description: Schedule status
           jsonPath: .status.phase
         - name: SCHEDULE
           type: string
-          description: Cron 表达式
+          description: Cron expression
           jsonPath: .spec.schedule
         - name: BACKUP TTL
           type: string
-          description: 备份保留时间
+          description: Backup retention time
           jsonPath: .spec.template.ttl
         - name: LAST BACKUP
           type: date
-          description: 最近一次备份时间
+          description: Last backup time
           jsonPath: .status.lastBackup
         - name: AGE
           type: date
@@ -411,9 +612,27 @@ spec:
       schema:
         openAPIV3Schema:
           type: object
-          x-kubernetes-preserve-unknown-fields: true
-      subresources:
-        status: {}
+          properties:
+            spec:
+              type: object
+              x-kubernetes-preserve-unknown-fields: true
+            status:
+              type: object
+              properties:
+                phase:
+                  type: string
+                serverVersion:
+                  type: string
+                plugins:
+                  type: array
+                  items:
+                    type: object
+                    x-kubernetes-preserve-unknown-fields: true
+                  nullable: true
+                processedTimestamp:
+                  type: string
+                  format: date-time
+              x-kubernetes-preserve-unknown-fields: true
 ---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
@@ -441,9 +660,16 @@ spec:
       schema:
         openAPIV3Schema:
           type: object
-          x-kubernetes-preserve-unknown-fields: true
-      subresources:
-        status: {}
+          properties:
+            spec:
+              type: object
+              x-kubernetes-preserve-unknown-fields: true
+            status:
+              type: object
+              properties:
+                phase:
+                  type: string
+              x-kubernetes-preserve-unknown-fields: true
       additionalPrinterColumns:
         - name: PHASE
           type: string
@@ -476,9 +702,29 @@ spec:
       schema:
         openAPIV3Schema:
           type: object
-          x-kubernetes-preserve-unknown-fields: true
-      subresources:
-        status: {}
+          properties:
+            spec:
+              type: object
+              x-kubernetes-preserve-unknown-fields: true
+            status:
+              type: object
+              properties:
+                phase:
+                  type: string
+                startTimestamp:
+                  type: string
+                  format: date-time
+                completionTimestamp:
+                  type: string
+                  format: date-time
+                progress:
+                  type: object
+                  x-kubernetes-preserve-unknown-fields: true
+                message:
+                  type: string
+                node:
+                  type: string
+              x-kubernetes-preserve-unknown-fields: true
       additionalPrinterColumns:
         - name: STATUS
           type: string
@@ -511,9 +757,29 @@ spec:
       schema:
         openAPIV3Schema:
           type: object
-          x-kubernetes-preserve-unknown-fields: true
-      subresources:
-        status: {}
+          properties:
+            spec:
+              type: object
+              x-kubernetes-preserve-unknown-fields: true
+            status:
+              type: object
+              properties:
+                phase:
+                  type: string
+                startTimestamp:
+                  type: string
+                  format: date-time
+                completionTimestamp:
+                  type: string
+                  format: date-time
+                progress:
+                  type: object
+                  x-kubernetes-preserve-unknown-fields: true
+                message:
+                  type: string
+                node:
+                  type: string
+              x-kubernetes-preserve-unknown-fields: true
       additionalPrinterColumns:
         - name: STATUS
           type: string
