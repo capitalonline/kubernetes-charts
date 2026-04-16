@@ -25,27 +25,27 @@ container:
   # OSS Server - InitContainer
   install-oss-server:
     image:
-      repository: capitalonline/oss-server
+      repository: registry-bj.capitalonline.net/cck/oss-server
       pullPolicy: Always
       tag: "v1.0.1"
 
   # CDS CSI Driver - OSS Node
   oss-csi-node-server:
     image:
-      repository: capitalonline/cds-csi-driver
+      repository: registry-bj.capitalonline.net/cck/cds-csi-driver
       pullPolicy: Always
       tag: "v2.1.2"
 
   # Node Driver Registrar
   oss-driver-registrar:
     image:
-      repository: capitalonline/csi-node-driver-registrar
+      repository: registry-bj.capitalonline.net/cck/csi-node-driver-registrar
       pullPolicy: Always
       tag: "v2.9.0"
 
   # Liveness Probe - Node
   oss-liveness-probe:
     image:
-      repository: capitalonline/csi-livenessprobe
+      repository: registry-bj.capitalonline.net/cck/csi-livenessprobe
       pullPolicy: IfNotPresent
       tag: "v2.11.0"

@@ -129,6 +129,8 @@ function print_help() {
   alertmanager [选项]                 安装 Alertmanager
   grafana [选项]                      安装 Grafana
   loki [选项]                         安装 Loki
+  loki-add-ingress [选项]             为已安装的 Loki 补充安装 Ingress
+  loki-update-promtail-config [选项]  更新 Loki 的 promtail-config 配置并滚动重启 DaemonSet
   dcgm-exporter                       安装 DCGM Exporter
   prometheus-adapter                  安装 Prometheus Adapter
   alertmanager-webhook-adapter        安装 Alertmanager Webhook Adapter
@@ -141,6 +143,7 @@ function print_help() {
   kubeprober                          安装 KubeProber 集群诊断工具
   node-agent  [选项]                   安装 Node Agent 绑核组件
   ingress-nginx                       安装 ingress-nginx 插件
+  velero [选项]                        安装 Velero 备份与恢复组件
   all                                 安装所有组件（使用默认参数）
 
 全局选项:
@@ -236,6 +239,13 @@ function print_help() {
     --max-query-length TIME       单次查询最大时间范围 (默认: 30d)
     --storage-class CLASS         存储类 (默认: default-local-sc)
     --storage-size SIZE           存储大小 (默认: 50Gi)
+    --ingress HOST                [可选] Ingress 主机名（HTTP，不含 TLS），为空则不创建 Ingress
+
+  loki-add-ingress:
+    --ingress HOST                [必传] Ingress 主机名，为已安装的 Loki 补充创建 Ingress
+
+  loki-update-promtail-config:
+    （无参数）重新 apply promtail-config ConfigMap 并滚动重启 promtail-daemonset
 
   p2p-accelerator:
     --mirrored-registries URL1,URL2  [必传] 镜像仓库地址列表 (逗号分隔，例如: https://registry1.com,https://registry2.com)
@@ -243,6 +253,16 @@ function print_help() {
   csi-disk:
     --gateway-host HOSTNAME       [可选] 网关主机名 (默认: gateway.gic.test)
     --gateway-ip IP               [可选] 网关 IP 地址 (默认: 192.168.0.100)
+
+  velero:
+    --s3-url URL                  [可选] S3/MinIO 服务地址（不传则部署无存储配置的 Velero）
+    --bucket NAME                 [可选] 备份存储桶名称 (默认: velero)
+    --access-key KEY              [可选] S3 Access Key（与 --s3-url 同时提供）
+    --secret-key KEY              [可选] S3 Secret Key（与 --s3-url 同时提供）
+    --region NAME                 [可选] S3 区域名称 (默认: minio)
+    --enable-node-agent           [可选] 启用 node-agent DaemonSet（用于 PVC 文件系统备份）
+
+    注意: --s3-url、--access-key、--secret-key 需同时提供或全部不提供
 
 EOF
 }
@@ -644,6 +664,7 @@ function cmd_loki() {
     local max_query_length="30d"
     local storage_class="default-local-sc"
     local storage_size="50Gi"
+    local ingress_host=""
     
     # 解析参数
     log_debug "解析安装参数..."
@@ -669,6 +690,11 @@ function cmd_loki() {
                 log_debug "设置 storage-size=${storage_size}"
                 shift 2
                 ;;
+            --ingress)
+                ingress_host="$2"
+                log_debug "设置 ingress-host=${ingress_host}"
+                shift 2
+                ;;
             *)
                 error_exit "未知选项: $1"
                 ;;
@@ -682,18 +708,111 @@ function cmd_loki() {
     log_info "  最大查询时长: ${max_query_length}"
     log_info "  存储类: ${storage_class}"
     log_info "  存储大小: ${storage_size}"
+    [[ -n "${ingress_host}" ]] && log_info "  Ingress Host: ${ingress_host}"
     
-    log_cmd "helm install loki ${CHARTS_DIR}/loki -n ${NAMESPACE} --create-namespace --set ..."
+    # 构建 helm 命令
+    log_info "构建 Helm 安装命令..."
+    local helm_args=(
+        "install" "loki" "${CHARTS_DIR}/loki"
+        "-n" "${NAMESPACE}" "--create-namespace"
+        "--set" "loki.retention=${retention}"
+        "--set" "loki.maxQueryLength=${max_query_length}"
+        "--set" "loki.storage.storageClassName=${storage_class}"
+        "--set" "loki.storage.size=${storage_size}"
+    )
+    
+    # 添加 ingress 配置
+    if [[ -n "${ingress_host}" ]]; then
+        log_debug "添加 Ingress 配置..."
+        helm_args+=("--set" "ingress.enabled=true")
+        helm_args+=("--set" "ingress.host=${ingress_host}")
+    fi
+    
+    log_cmd "helm ${helm_args[*]}"
     log_info "开始执行 Helm 安装..."
-    if helm install loki ${CHARTS_DIR}/loki \
-      -n ${NAMESPACE} --create-namespace \
-      --set loki.retention=${retention} \
-      --set loki.maxQueryLength=${max_query_length} \
-      --set loki.storage.storageClassName=${storage_class} \
-      --set loki.storage.size=${storage_size}; then
+    if helm "${helm_args[@]}"; then
         log_step "✓ Loki 安装成功"
     else
         error_exit "Loki 安装失败"
+    fi
+}
+
+# 为已安装的 Loki 补充安装 Ingress
+function cmd_loki_add_ingress() {
+    log_step "开始为 Loki 补充安装 Ingress"
+    
+    local ingress_host=""
+    
+    # 解析参数
+    log_debug "解析参数..."
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            --ingress)
+                ingress_host="$2"
+                log_debug "设置 ingress-host=${ingress_host}"
+                shift 2
+                ;;
+            *)
+                error_exit "未知选项: $1"
+                ;;
+        esac
+    done
+    
+    if [[ -z "${ingress_host}" ]]; then
+        error_exit "必须通过 --ingress 指定 Ingress Host 主机名"
+    fi
+    
+    # 检查 Loki 是否已安装
+    log_info "检查 Loki 是否已安装..."
+    if ! helm status loki -n ${NAMESPACE} &> /dev/null; then
+        error_exit "Loki 未安装，请先安装 Loki（./install.sh loki）"
+    fi
+    
+    log_info "Loki Ingress 配置:"
+    log_info "  命名空间: ${NAMESPACE}"
+    log_info "  Ingress Host: ${ingress_host}"
+    
+    log_cmd "helm upgrade loki ${CHARTS_DIR}/loki -n ${NAMESPACE} --reuse-values --set ingress.enabled=true --set ingress.host=${ingress_host}"
+    log_info "开始执行 Helm Upgrade..."
+    if helm upgrade loki ${CHARTS_DIR}/loki \
+      -n ${NAMESPACE} \
+      --reuse-values \
+      --set ingress.enabled=true \
+      --set "ingress.host=${ingress_host}"; then
+        log_step "✓ Loki Ingress 安装成功"
+        log_info "Ingress Host: ${ingress_host}"
+    else
+        error_exit "Loki Ingress 安装失败"
+    fi
+}
+
+# 更新 Loki promtail-config 配置并滚动重启 DaemonSet
+function cmd_loki_update_promtail_config() {
+    log_step "开始更新 Loki promtail-config 配置"
+
+    # 检查 promtail-daemonset 是否存在
+    log_info "检查 promtail-daemonset 是否存在..."
+    if ! kubectl -n ${NAMESPACE} get daemonset promtail-daemonset &> /dev/null; then
+        error_exit "promtail-daemonset 不存在，请确认 Loki 已正常部署"
+    fi
+
+    # apply promtail-config ConfigMap
+    local config_file="${CHARTS_DIR}/loki/templates/promtail/promtail-config.yaml"
+    log_cmd "kubectl apply -f ${config_file}"
+    log_info "开始 apply promtail-config ConfigMap..."
+    if kubectl apply -f "${config_file}"; then
+        log_info "✓ promtail-config ConfigMap apply 成功"
+    else
+        error_exit "promtail-config ConfigMap apply 失败"
+    fi
+
+    # 滚动重启 DaemonSet
+    log_cmd "kubectl -n ${NAMESPACE} rollout restart daemonset promtail-daemonset"
+    log_info "开始滚动重启 promtail-daemonset..."
+    if kubectl -n ${NAMESPACE} rollout restart daemonset promtail-daemonset; then
+        log_step "✓ promtail-config 更新并重启完成"
+    else
+        error_exit "promtail-daemonset 滚动重启失败"
     fi
 }
 
@@ -1124,6 +1243,174 @@ function cmd_node_agent() {
     fi
 }
 
+function cmd_velero() {
+    log_step "开始安装 Velero"
+
+    local namespace="velero"
+    local s3_url=""
+    local bucket="velero"
+    local access_key=""
+    local secret_key=""
+    local region="minio"
+    local enable_node_agent=false
+
+    # 解析参数
+    log_debug "解析安装参数..."
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            --s3-url)
+                s3_url="$2"
+                log_debug "参数: s3-url = ${s3_url}"
+                shift 2
+                ;;
+            --bucket)
+                bucket="$2"
+                log_debug "参数: bucket = ${bucket}"
+                shift 2
+                ;;
+            --access-key)
+                access_key="$2"
+                log_debug "参数: access-key = ${access_key}"
+                shift 2
+                ;;
+            --secret-key)
+                secret_key="$2"
+                log_debug "参数: secret-key = ***"
+                shift 2
+                ;;
+            --region)
+                region="$2"
+                log_debug "参数: region = ${region}"
+                shift 2
+                ;;
+            --enable-node-agent)
+                enable_node_agent=true
+                log_debug "参数: enable-node-agent = true"
+                shift
+                ;;
+            *)
+                log_warn "未知参数: $1"
+                shift
+                ;;
+        esac
+    done
+
+    # 判断是否配置了存储（三个参数需同时提供）
+    local has_storage=false
+    if [[ -n "${s3_url}" ]] && [[ -n "${access_key}" ]] && [[ -n "${secret_key}" ]]; then
+        has_storage=true
+    elif [[ -n "${s3_url}" ]] || [[ -n "${access_key}" ]] || [[ -n "${secret_key}" ]]; then
+        error_exit "--s3-url、--access-key、--secret-key 三个参数需同时提供，或全部不提供（不配置存储）"
+    fi
+
+    # 显示配置信息
+    log_info "Velero 安装配置:"
+    log_info "  命名空间: ${namespace}"
+    if [[ "${has_storage}" == "true" ]]; then
+        log_info "  S3 地址: ${s3_url}"
+        log_info "  存储桶: ${bucket}"
+        log_info "  S3 区域: ${region}"
+    else
+        log_info "  存储配置: 未配置（后续可在集群中手动创建 BackupStorageLocation）"
+    fi
+    log_info "  Node Agent: ${enable_node_agent}"
+
+    # 检查 chart 是否存在
+    log_debug "检查 chart 目录: ${CHARTS_DIR}/velero"
+    if [[ ! -d "${CHARTS_DIR}/velero" ]]; then
+        error_exit "Chart 目录不存在: ${CHARTS_DIR}/velero"
+    fi
+
+    # 独立 apply CRD（Helm 3 的 crds/ 目录只在首次 install 时安装，upgrade 时不更新）
+    log_info "应用 Velero CRDs..."
+    if [[ -f "${CHARTS_DIR}/velero/crds/velero-crds.yaml" ]]; then
+        log_cmd "kubectl apply -f ${CHARTS_DIR}/velero/crds/velero-crds.yaml"
+        if kubectl apply -f "${CHARTS_DIR}/velero/crds/velero-crds.yaml" --server-side --force-conflicts; then
+            log_info "✓ Velero CRDs 应用成功"
+        else
+            log_warn "CRDs 应用失败，尝试使用常规方式..."
+            if kubectl apply -f "${CHARTS_DIR}/velero/crds/velero-crds.yaml"; then
+                log_info "✓ Velero CRDs 应用成功（常规方式）"
+            else
+                error_exit "Velero CRDs 应用失败"
+            fi
+        fi
+    else
+        error_exit "CRD 文件不存在: ${CHARTS_DIR}/velero/crds/velero-crds.yaml"
+    fi
+
+    # 构建 helm 命令
+    log_info "构建 Helm 安装命令..."
+    local helm_args=(
+        "upgrade" "--install" "velero" "${CHARTS_DIR}/velero"
+        "-n" "${namespace}" "--create-namespace"
+        "--skip-crds"
+    )
+
+    if [[ "${has_storage}" == "true" ]]; then
+        # 写入临时凭据配置文件（避免 --set 处理多行字符串的问题）
+        local tmp_values
+        tmp_values=$(mktemp /tmp/velero-values-XXXXXX.yaml)
+        cat > "${tmp_values}" << HEREDOC
+credentials:
+  useSecret: true
+  secretContents:
+    cloud: |
+      [default]
+      aws_access_key_id = ${access_key}
+      aws_secret_access_key = ${secret_key}
+HEREDOC
+        log_debug "临时凭据文件: ${tmp_values}"
+
+        helm_args+=(
+            "-f" "${tmp_values}"
+            "--set" "backupStorageLocation.enabled=true"
+            "--set" "backupStorageLocation.config.s3Url=${s3_url}"
+            "--set" "backupStorageLocation.bucket=${bucket}"
+            "--set" "backupStorageLocation.config.region=${region}"
+            "--set" "volumeSnapshotLocation.enabled=true"
+        )
+    fi
+
+    if [[ "${enable_node_agent}" == "true" ]]; then
+        helm_args+=("--set" "nodeAgent.enabled=true")
+    fi
+
+    log_cmd "helm ${helm_args[*]}"
+
+    # 执行安装
+    log_info "开始执行 Helm 安装..."
+    if helm "${helm_args[@]}"; then
+        [[ "${has_storage}" == "true" ]] && rm -f "${tmp_values}"
+        log_step "✓ Velero 安装成功"
+        echo ""
+        log_info "验证安装："
+        log_info "  kubectl -n ${namespace} get pods"
+        if [[ "${has_storage}" == "true" ]]; then
+            log_info "  kubectl -n ${namespace} get backupstoragelocation"
+            log_info ""
+            log_info "查看备份存储位置连接状态："
+            log_info "  kubectl -n ${namespace} get bsl"
+            log_info ""
+            log_info "创建一次性备份示例："
+            log_info "  velero backup create my-backup --include-namespaces default -n ${namespace}"
+        else
+            log_info ""
+            log_warn "存储未配置，备份功能暂不可用"
+            log_info "后续配置存储请手动创建 BackupStorageLocation："
+            log_info "  kubectl apply -f <your-bsl.yaml> -n ${namespace}"
+        fi
+        log_info ""
+        if [[ "${enable_node_agent}" == "true" ]]; then
+            log_info "Node Agent（文件系统备份）已启用："
+            log_info "  kubectl -n ${namespace} get daemonset node-agent"
+        fi
+    else
+        [[ "${has_storage}" == "true" ]] && rm -f "${tmp_values}"
+        error_exit "Velero 安装失败，请检查 Helm 输出"
+    fi
+}
+
 function cmd_ingress_nginx() {
     log_step "开始安装 ingress-nginx"
 
@@ -1189,6 +1476,11 @@ function cmd_ingress_nginx() {
     if [[ "${service_type}" == "NodePort" ]]; then
         external_traffic_policy="Cluster"
         log_info "NodePort 模式强制 externalTrafficPolicy=Cluster"
+    fi
+
+    if [[ ${replicas} -gt 3 ]]; then
+        replicas=3
+        log_info "ingress-nginx 副本数不能超过 3 个 (当前请求: ${replicas}), 设置replicas=3"
     fi
 
     if [[ "${service_type}" == "LoadBalancer" ]]; then
@@ -1456,7 +1748,7 @@ function main() {
                 print_help
                 exit 0
                 ;;
-            prometheus|alertmanager|grafana|loki|dcgm-exporter|prometheus-adapter|alertmanager-webhook-adapter|cronhpa-controller|vpc-cni|p2p-accelerator|csi-disk|csi-oss|csi-nfs|cloud-controller-manager|node-agent|ingress-nginx|kubeprober|all)
+            prometheus|alertmanager|grafana|loki|loki-add-ingress|loki-update-promtail-config|dcgm-exporter|prometheus-adapter|alertmanager-webhook-adapter|cronhpa-controller|vpc-cni|p2p-accelerator|csi-disk|csi-oss|csi-nfs|cloud-controller-manager|node-agent|ingress-nginx|kubeprober|velero|all)
                 local cmd="$1"
                 shift
                 

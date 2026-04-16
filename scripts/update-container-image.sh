@@ -147,7 +147,7 @@ Options:
 Examples:
   # Update cronhpa-controller image (Deployment)
   $0 cronhpa-controller -c cronhpa-controller \\
-    -i capitalonline/kubernetes-cronhpa-controller:v1.1.0 \\
+    -i harbor-dev.yun-paas.com/dev/kubernetes-cronhpa-controller:v1.1.0 \\
     -n kube-system -k Deployment
 
   # Update prometheus node-exporter (DaemonSet)
@@ -174,6 +174,7 @@ Component to Container Mapping:
   csi-nfs            → csi-provisioner, csi-resizer, csi-snapshotter,
                       livenessprobe, node-driver-registrar, nfs
   cloud-controller-manager  → cds-cloud-controller-manager
+  velero              → velero, velero-plugin-for-aws, node-agent
 
 EOF
 }
@@ -235,15 +236,37 @@ function build_helm_command() {
     # Build base command
     local cmd="helm upgrade ${release} ${CHARTS_DIR}/${release} -n ${namespace}"
     
-    # Add image configuration
-    if [[ -n "${image_registry}" ]]; then
-        local full_repo="${image_registry}/${image_repository}"
-        cmd="${cmd} --set ${values_path}.repository=${full_repo}"
+    # Special handling for cloud-controller-manager
+    # This chart uses image.repository and image.tag directly (not container.<name>.image)
+    if [[ "${release}" == "cloud-controller-manager" ]]; then
+        # Add image configuration
+        if [[ -n "${image_registry}" ]]; then
+            local full_repo="${image_registry}/${image_repository}"
+            cmd="${cmd} --set image.repository=${full_repo}"
+        else
+            cmd="${cmd} --set image.repository=${image_repository}"
+        fi
+        
+        cmd="${cmd} --set image.tag=${image_tag}"
+    elif [[ "${release}" == "ingress-nginx" ]]; then
+            cmd="${cmd} --set controller.image.registry=${image_registry}"
+            cmd="${cmd} --set controller.image.image=${image_repository}"
+            cmd="${cmd} --set controller.image.tag=${image_tag}"
+    elif [[ "${release}" == "kubeprober" ]]; then
+           cmd="${cmd} --set probeAgent.image.repository=${image_registry}/${image_repository}"
+           cmd="${cmd} --set probeAgent.image.tag=${image_tag}"
     else
-        cmd="${cmd} --set ${values_path}.repository=${image_repository}"
+        # Standard path for other charts
+        # Add image configuration
+        if [[ -n "${image_registry}" ]]; then
+            local full_repo="${image_registry}/${image_repository}"
+            cmd="${cmd} --set ${values_path}.repository=${full_repo}"
+        else
+            cmd="${cmd} --set ${values_path}.repository=${image_repository}"
+        fi
+        
+        cmd="${cmd} --set ${values_path}.tag=${image_tag}"
     fi
-    
-    cmd="${cmd} --set ${values_path}.tag=${image_tag}"
     
     # Add reuse-values to keep other configurations
     cmd="${cmd} --reuse-values"

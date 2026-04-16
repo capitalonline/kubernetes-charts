@@ -151,10 +151,10 @@ rdma:
 
     image:
       ## @param rdma.rdmaSharedDevicePlugin.image.registry the image registry of rdma shared device plugin
-      registry: capitalonline
+      registry: registry-bj.capitalonline.net
 
       ## @param rdma.rdmaSharedDevicePlugin.image.repository the image repository of rdma shared device plugin
-      repository: /k8s-rdma-shared-dev-plugin
+      repository: spidernet-io/k8s-rdma-shared-dev-plugin
 
       ## @param rdma.rdmaSharedDevicePlugin.image.pullPolicy the image pullPolicy of rdma shared device plugin
       pullPolicy: IfNotPresent
@@ -233,10 +233,10 @@ multus:
 
     image:
       ## @param multus.multusCNI.image.registry the multus-CNI image registry
-      registry: capitalonline
+      registry: registry-bj.capitalonline.net
 
       ## @param multus.multusCNI.image.repository the multus-CNI image repository
-      repository: /multus-cni
+      repository: spidernet-io/multus-cni
 
       ## @param multus.multusCNI.image.pullPolicy the multus-CNI image pullPolicy
       pullPolicy: IfNotPresent
@@ -301,10 +301,10 @@ plugins:
 
   image:
     ## @param plugins.image.registry the image registry of plugins
-    registry: capitalonline
+    registry: registry-bj.capitalonline.net
 
     ## @param plugins.image.repository the image repository of plugins
-    repository: /spiderpool-plugins
+    repository: spidernet-io/spiderpool-plugins
 
     ## @param plugins.image.pullPolicy the image pullPolicy of plugins
     pullPolicy: IfNotPresent
@@ -368,10 +368,10 @@ spiderpoolAgent:
 
   image:
     ## @param spiderpoolAgent.image.registry the image registry of spiderpoolAgent
-    registry: capitalonline
+    registry: registry-bj.capitalonline.net
 
     ## @param spiderpoolAgent.image.repository the image repository of spiderpoolAgent
-    repository: /spiderpool-agent
+    repository: spidernet-io/spiderpool-agent
 
     ## @param spiderpoolAgent.image.pullPolicy the image pullPolicy of spiderpoolAgent
     pullPolicy: IfNotPresent
@@ -558,10 +558,10 @@ spiderpoolController:
 
   image:
     ## @param spiderpoolController.image.registry the image registry of spiderpoolController
-    registry: capitalonline
+    registry: registry-bj.capitalonline.net
 
     ## @param spiderpoolController.image.repository the image repository of spiderpoolController
-    repository: /spiderpool-controller
+    repository: spidernet-io/spiderpool-controller
 
     ## @param spiderpoolController.image.pullPolicy the image pullPolicy of spiderpoolController
     pullPolicy: IfNotPresent
@@ -807,10 +807,10 @@ spiderpoolInit:
 
   image:
     ## @param spiderpoolInit.image.registry the image registry of spiderpoolInit
-    registry: capitalonline
+    registry: registry-bj.capitalonline.net
 
     ## @param spiderpoolInit.image.repository the image repository of spiderpoolInit
-    repository: /spiderpool-controller
+    repository: spidernet-io/spiderpool-controller
 
     ## @param spiderpoolInit.image.pullPolicy the image pullPolicy of spiderpoolInit
     pullPolicy: IfNotPresent
@@ -906,7 +906,7 @@ sriov:
 
   image:
     ## @param sriov.image.registry registry for all images
-    registry: capitalonline
+    registry: registry-bj.capitalonline.net
 
     ## @param sriov.image.pullPolicy the image pullPolicy for all images
     pullPolicy: IfNotPresent
@@ -917,7 +917,7 @@ sriov:
 
     operator:
       ## @param sriov.image.operator.repository the image repository
-      repository: /sriov-network-operator
+      repository: spidernet-io/sriov-network-operator
 
       ## @param sriov.image.operator.tag the image tag
       tag: v1.3.0

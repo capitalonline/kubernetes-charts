@@ -137,6 +137,7 @@ function print_help() {
   node-agent                          卸载 Node Agent 绑核组件
   cloud-controller-manager                      卸载云控制器
   ingress-nginx                       卸载 ingress-nginx 控制器
+  velero                              卸载 Velero 备份与恢复组件
 
 全局选项:
   -v, --verbose                       显示详细信息（包括执行的命令）
@@ -298,7 +299,7 @@ function main() {
                 print_help
                 exit 0
                 ;;
-            cronhpa-controller|vpc-cni|p2p-accelerator|csi-disk|csi-oss|csi-nfs|node-agent|cloud-controller-manager|ingress-nginx|kubeprober)
+            cronhpa-controller|vpc-cni|p2p-accelerator|csi-disk|csi-oss|csi-nfs|node-agent|cloud-controller-manager|ingress-nginx|kubeprober|velero)
                 local component="$1"
                 shift
                 
@@ -328,6 +329,8 @@ function main() {
                     target_ns="ingress-nginx"
                 elif [[ "${component}" == "kubeprober" ]]; then
                     target_ns="kubeprober"
+                elif [[ "${component}" == "velero" ]]; then
+                    target_ns="velero"
                 fi
 
                 log_step "开始卸载 ${component}"
@@ -353,6 +356,16 @@ function main() {
                     log_info "  kubectl delete -f charts/kubeprober/crds/"
                     log_info ""
                     log_warn "注意：删除 CRDs 会同时删除所有相关的自定义资源（Probes、ProbeStatuses、Alerts）"
+                fi
+
+                # 如果是 velero，提示 CRDs 保留信息
+                if [[ "${component}" == "velero" ]]; then
+                    log_info ""
+                    log_info "Velero CRDs 仍然保留在集群中"
+                    log_info "如需删除 CRDs，请手动执行："
+                    log_info "  kubectl delete crd -l app.kubernetes.io/name=velero"
+                    log_info ""
+                    log_warn "注意：删除 CRDs 会同时删除所有备份记录（Backup、Restore、Schedule 等资源）"
                 fi
 
                 log_step "✓ 卸载操作完成"

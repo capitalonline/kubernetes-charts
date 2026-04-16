@@ -8,6 +8,10 @@ loki:
     storageClassName: default-local-sc
     size: 20Gi
 
+ingress:
+  enabled: false
+  host: ""
+
 # ==========================================
 # Container Configuration (Unified Namespace)
 # ==========================================
@@ -15,18 +19,18 @@ container:
   # Loki main container
   loki:
     image:
-      repository: capitalonline/loki
+      repository: registry-bj.capitalonline.net/eks/loki
       tag: "3.2.0"
   
   # Promtail log collection
   promtail-container:
     image:
-      repository: capitalonline/promtail
+      repository: registry-bj.capitalonline.net/eks/promtail
       tag: "3.2.0"
   
   # Kubernetes event exporter
   event-exporter:
     image:
-      repository: capitalonline/kubernetes-event-exporter
+      repository: registry-bj.capitalonline.net/eks/kubernetes-event-exporter
       tag: v1.7
 

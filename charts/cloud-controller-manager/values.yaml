@@ -1,6 +1,6 @@
 # Default values for cloud-controller-manager
 image:
-  repository: capitalonline/eks-cloud-controller-manager
+  repository: registry-bj.capitalonline.net/eks/eks-cloud-controller-manager
   tag: v1.1.0-dev
   pullPolicy: Always
 

@@ -17,7 +17,7 @@ spec:
           - name: KEEP_COMPLETED_PODS
             value: "3"  # 保留最新的 3 个 Completed Pod
         name: k8s
-        image: capitalonline/kubeprober/probe-k8s:v1.0.0
+        image: registry-bj.capitalonline.net/eks/kubeprober/probe-k8s:v1.0.0
         resources:
           requests:
             cpu: 10m
@@ -40,16 +40,19 @@ spec:
     # 容忍 Master 节点的污点
     tolerations:
       - key: node-role.kubernetes.io/control-plane
+        operator: "Exists"
         effect: NoSchedule
       - key: node-role.kubernetes.io/master
+        operator: "Exists"
         effect: NoSchedule
       - key: node-role.eks.net/infra
+        operator: "Exists"
         effect: NoSchedule
   configs:
     - name: control-plane
       env:
         - name: CHECK_IMAGE
-          value: "capitalonline/nginx-unprivileged:1.17.8"
+          value: "registry-bj.capitalonline.net/eks/kubeprober/nginx-unprivileged:1.17.8"
         - name: PRIVATE_DOMAIN
           value: "kubernetes.default"
         - name: DNS_CHECK_NAMESPACE

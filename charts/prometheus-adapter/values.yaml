@@ -17,6 +17,6 @@ container:
   # Prometheus Adapter main container
   prometheus-adapter:
     image:
-      repository: capitalonline/prometheus-adapter
+      repository: registry-bj.capitalonline.net/eks/prometheus-adapter
       tag: v0.11.1
 

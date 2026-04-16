@@ -174,6 +174,10 @@ function build_replica_helm_command() {
         # ingress-nginx uses controller.replicaCount
         cmd="${cmd} --set controller.replicaCount=${replicas}"
         log_debug "使用路径: controller.replicaCount"
+    elif [[ "${release}" == "velero" ]]; then
+        # velero uses deployment.replicas
+        cmd="${cmd} --set deployment.replicas=${replicas}"
+        log_debug "使用路径: deployment.replicas"
     else
         # Standard components use replicaCount
         cmd="${cmd} --set replicaCount=${replicas}"

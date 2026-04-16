@@ -40,48 +40,48 @@ container:
   # Prometheus main container
   prometheus:
     image:
-      repository: capitalonline/prometheus
+      repository: registry-bj.capitalonline.net/eks/prometheus
       tag: v2.46.0
   
   # Prometheus Operator
   prometheus-operator:
     image:
-      repository: capitalonline/prometheus-operator
+      repository: registry-bj.capitalonline.net/eks/prometheus-operator
       tag: v0.67.1
   
   # Config Reloader (Prometheus Operator sidecar)
   config-reloader:
     image:
-      repository: capitalonline/prometheus-config-reloader
+      repository: registry-bj.capitalonline.net/eks/prometheus-config-reloader
       tag: v0.67.1
   
   # Node Exporter - Node metrics collection
   node-exporter:
     image:
-      repository: capitalonline/node-exporter
+      repository: registry-bj.capitalonline.net/eks/node-exporter
       tag: v1.6.1
   
   # Kube State Metrics - K8s cluster state metrics
   kube-state-metrics:
     image:
-      repository: capitalonline/kube-state-metrics
+      repository: registry-bj.capitalonline.net/eks/kube-state-metrics
       tag: v2.9.2
   
   # Blackbox Exporter - Blackbox monitoring probe
   blackbox-exporter:
     image:
-      repository: capitalonline/blackbox-exporter
+      repository: registry-bj.capitalonline.net/eks/blackbox-exporter
       tag: v0.24.0
   
   # Module Configmap Reloader (Blackbox Exporter sidecar)
   module-configmap-reloader:
     image:
-      repository: capitalonline/configmap-reload
+      repository: registry-bj.capitalonline.net/eks/configmap-reload
       tag: v0.5.0
   
   # Kube RBAC Proxy (Shared sidecar for multiple components)
   kube-rbac-proxy:
     image:
-      repository: capitalonline/kube-rbac-proxy
+      repository: registry-bj.capitalonline.net/eks/kube-rbac-proxy
       tag: v0.14.2
 

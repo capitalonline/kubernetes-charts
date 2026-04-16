@@ -41,8 +41,8 @@ controller:
   nodeSelector: {}
 
   image:
-    registry: capitalonline
-    image: /ingress-nginx-controller
+    registry: registry-bj.capitalonline.net
+    image: eks/ingress-nginx-controller
     tag: "v1.7.1"
     pullPolicy: IfNotPresent
 
@@ -83,8 +83,8 @@ controller:
 
     createSecretJob:
       image:
-        registry: capitalonline
-        image: /ingress-nginx-kube-webhook-certgen
+        registry: registry-bj.capitalonline.net
+        image: eks/ingress-nginx-kube-webhook-certgen
         tag: v20230312
         pullPolicy: IfNotPresent
 

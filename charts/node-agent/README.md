@@ -42,7 +42,7 @@ kubectl -n kube-system describe daemonset node-agent
 
 ### 固定配置项
 
-- **镜像**: `capitalonline/test/node-agent:v1.3`
+- **镜像**: `registry-bj.capitalonline.net/test/node-agent:v1.3`
 - **资源预留**: CPU 2 核，内存 2Gi
 - **目标 Annotation**: `cds-node/cpu-manager-policy`
 - **部署节点**: 仅工作节点（自动排除控制平面节点）
@@ -57,7 +57,7 @@ kubectl -n kube-system describe daemonset node-agent
 container:
   agent:
     image:
-      repository: capitalonline/node-agent
+      repository: registry-bj.capitalonline.net/test/node-agent
       tag: v1.3
       pullPolicy: Always
 ```
@@ -65,7 +65,7 @@ container:
 使用镜像更新脚本：
 ```bash
 ./update-image.sh node-agent -c agent \\
-  -i capitalonline/node-agent:v1.4 \\
+  -i registry-bj.capitalonline.net/test/node-agent:v1.4 \\
   -n kube-system -k DaemonSet
 ```
 

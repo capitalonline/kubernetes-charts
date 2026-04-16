@@ -137,12 +137,38 @@ sudo git clone https://gitee.com/capitalonline2025/kubernetes-charts.git /srv/ku
 #### 安装 Loki
 
 ```bash
+# 基础安装（不含 Ingress）
 ./install.sh -d -l loki \
   --retention 30d \
   --max-query-length 30d \
   --storage-size 200Gi \
   --storage-class default-local-sc
+
+# 安装并同时配置 Ingress（HTTP，无 TLS）
+./install.sh -d -l loki \
+  --retention 30d \
+  --storage-size 200Gi \
+  --storage-class default-local-sc \
+  --ingress loki.example.com
 ```
+
+#### 为已安装的 Loki 补充安装 Ingress
+
+```bash
+# 对之前未配置 Ingress 的 Loki 补充安装
+./install.sh -d -l loki-add-ingress \
+  --ingress loki.example.com
+```
+
+#### 更新 Loki promtail-config 配置并滚动重启
+
+修改 `charts/loki/templates/promtail/promtail-config.yaml` 后执行：
+
+```bash
+./install.sh -d -l loki-update-promtail-config
+```
+
+执行流程：re-apply `promtail-config.yaml` → 滚动重启 `promtail-daemonset` 所有 Pod
 
 #### 安装其他组件
 
@@ -213,6 +239,7 @@ sudo git clone https://gitee.com/capitalonline2025/kubernetes-charts.git /srv/ku
 - `alertmanager` - 安装 Alertmanager
 - `grafana` - 安装 Grafana
 - `loki` - 安装 Loki
+- `loki-add-ingress` - 为已安装的 Loki 补充安装 Ingress
 - `dcgm-exporter` - 安装 DCGM Exporter
 - `prometheus-adapter` - 安装 Prometheus Adapter
 - `alertmanager-webhook-adapter` - 安装 Alertmanager Webhook Adapter
@@ -253,6 +280,15 @@ sudo git clone https://gitee.com/capitalonline2025/kubernetes-charts.git /srv/ku
 **Loki 参数：**
 - `--storage-class CLASS` - 存储类（默认：default-local-sc）
 - `--storage-size SIZE` - 存储大小（默认：50Gi）
+- `--retention TIME` - 日志数据保留期（默认：30d）
+- `--max-query-length TIME` - 单次查询最大时间范围（默认：30d）
+- `--ingress HOST` - [可选] Ingress 主机名（HTTP，无 TLS），为空则不创建 Ingress
+
+**loki-add-ingress 参数：**
+- `--ingress HOST` - [必传] Ingress 主机名，为已安装的 Loki 补充安装 Ingress
+
+**loki-update-promtail-config：**
+- 无参数，修改 `charts/loki/templates/promtail/promtail-config.yaml` 后执行即可
 
 **P2P Accelerator 参数：**
 - `--mirrored-registries URL1,URL2` - [必传] 镜像仓库地址列表（逗号分隔，如：https://registry1.com,https://registry2.com）
@@ -349,7 +385,7 @@ done
 # 更新 cronhpa-controller 镜像（Deployment）
 ./update-image.sh cronhpa-controller \
   -c cronhpa-controller \
-  -i capitalonline/kubernetes-cronhpa-controller:v1.1.0 \
+  -i harbor-dev.yun-paas.com/dev/kubernetes-cronhpa-controller:v1.1.0 \
   -n kube-system \
   -k Deployment
 
@@ -424,10 +460,11 @@ done
   --storage-class fast-ssd \
   --ingress grafana.example.com,grafana-internal.example.com
 
-# 4. 安装 Loki
+# 4. 安装 Loki（含 Ingress）
 ./install.sh -d -l loki \
   --storage-size 200Gi \
-  --storage-class fast-ssd
+  --storage-class fast-ssd \
+  --ingress loki.example.com
 
 # 5. 安装其他组件
 ./install.sh -d -l dcgm-exporter                     # GPU 监控（如有 NVIDIA GPU）
@@ -476,7 +513,7 @@ kubectl -n monitoring get pvc
 # 更新单个组件的镜像
 ./update-image.sh cronhpa-controller \
   -c cronhpa-controller \
-  -i capitalonline/kubernetes-cronhpa-controller:v1.1.0 \
+  -i harbor-dev.yun-paas.com/dev/kubernetes-cronhpa-controller:v1.1.0 \
   -n kube-system \
   -k Deployment
 
@@ -594,6 +631,9 @@ kubectl -n monitoring get pvc
   
 - **Alertmanager**: `https://alertmanager.example.com`
   - 默认账号/密码：`admin/admin`（可通过 `--htpasswd` 自定义）
+
+- **Loki**: `http://loki.example.com`（HTTP，无 TLS）
+  - 可直接作为 Grafana 数据源地址
 
 ### 通过 Port Forward 访问
 

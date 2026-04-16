@@ -63,7 +63,6 @@ spec:
           capabilities:
             drop:
             - ALL
-          readOnlyRootFilesystem: true
           seccompProfile:
             type: RuntimeDefault
         volumeMounts:
@@ -151,6 +150,15 @@ spec:
         - mountPath: /etc/grafana
           name: grafana-config
           readOnly: false
+        - mountPath: /etc/grafana/provisioning/plugins
+          name: grafana-provisioning-plugins
+          readOnly: false
+        - mountPath: /etc/grafana/provisioning/notifiers
+          name: grafana-provisioning-notifiers
+          readOnly: false
+        - mountPath: /etc/grafana/provisioning/alerting
+          name: grafana-provisioning-alerting
+          readOnly: false
       securityContext:
         runAsUser: 0
       serviceAccountName: grafana
@@ -236,6 +244,12 @@ spec:
       - secret:
           secretName: grafana-config
         name: grafana-config
+      - emptyDir: {}
+        name: grafana-provisioning-plugins
+      - emptyDir: {}
+        name: grafana-provisioning-notifiers
+      - emptyDir: {}
+        name: grafana-provisioning-alerting
   volumeClaimTemplates:
     - apiVersion: v1
       kind: PersistentVolumeClaim

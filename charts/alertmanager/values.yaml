@@ -26,17 +26,17 @@ container:
   # Alertmanager main container
   alertmanager:
     image:
-      repository: capitalonline/alertmanager
+      repository: registry-bj.capitalonline.net/eks/alertmanager
       tag: v0.26.0
   
   # Config Reloader (Auto-injected by Prometheus Operator)
   config-reloader:
     image:
-      repository: capitalonline/prometheus-config-reloader
+      repository: registry-bj.capitalonline.net/eks/prometheus-config-reloader
       tag: v0.67.1
   
   # Webhook Adapter (Separate Deployment)
   webhook:
     image:
-      repository: capitalonline/alertmanager-webhook-adapter
+      repository: registry-bj.capitalonline.net/eks/alertmanager-webhook-adapter
       tag: v1.1.7

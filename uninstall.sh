@@ -95,6 +95,7 @@ function print_help() {
   node-agent                          卸载节点代理
   cloud-controller-manager            卸载云控制器
   ingress-nginx                       卸载 ingress-nginx 插件
+  velero                              卸载 Velero 备份与恢复组件
   all                                 卸载所有组件（所有命名空间）
   clean                               清理 secrets 和命名空间
   kubeprober                          卸载 kubeprober

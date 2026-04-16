@@ -3,6 +3,16 @@
 apiVersion: v1
 data:
   allow-snippet-annotations: "{{ .Values.controller.config.allowSnippetAnnotations }}"
+  ssl-reject-handshake: "false"
+  proxy-buffer-size: "16k"
+  proxy-buffers-number: "8"
+  proxy-busy-buffers-size: "32k"
+  proxy-body-size: "50m"
+  use-gzip: "true"
+  gzip-level: "6"
+  gzip-types: "application/javascript application/x-javascript text/javascript text/css application/json application/xml text/plain image/svg+xml font/woff2"
+  keep-alive: "75"
+  keep-alive-requests: "1000"
 kind: ConfigMap
 metadata:
   labels:

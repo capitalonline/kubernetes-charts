@@ -38,55 +38,55 @@ container:
   # CDS CSI Driver - Controller
   csi-controller-server:
     image:
-      repository: capitalonline/cds-csi-driver
+      repository: registry-bj.capitalonline.net/eks/cds-csi-driver
       pullPolicy: Always
       tag: "v1.0.1-eks"
 
   # CSI Provisioner
   csi-provisioner:
     image:
-      repository: capitalonline/csi-provisioner
+      repository: registry-bj.capitalonline.net/cck/csi-provisioner
       pullPolicy: IfNotPresent
       tag: "v3.1.0"
 
   # CSI Attacher
   csi-attacher:
     image:
-      repository: capitalonline/csi-attacher
+      repository: registry-bj.capitalonline.net/cck/csi-attacher
       pullPolicy: IfNotPresent
       tag: "v4.3.0"
 
   # CSI Resizer
   csi-resizer:
     image:
-      repository: capitalonline/csi-resizer
+      repository: registry-bj.capitalonline.net/cck/csi-resizer
       pullPolicy: IfNotPresent
       tag: "v1.9.0"
 
   # Liveness Probe - Controller
   liveness-probe-controller:
     image:
-      repository: capitalonline/csi-livenessprobe
+      repository: registry-bj.capitalonline.net/cck/csi-livenessprobe
       pullPolicy: IfNotPresent
       tag: "v2.0.0"
 
   # CDS CSI Driver - Node
   eks-disk-csi-node-server:
     image:
-      repository: capitalonline/cds-csi-driver
+      repository: registry-bj.capitalonline.net/eks/cds-csi-driver
       pullPolicy: Always
       tag: "v1.0.1-eks"
 
   # Node Driver Registrar
   eks-disk-driver-registrar:
     image:
-      repository: capitalonline/csi-node-driver-registrar
+      repository: registry-bj.capitalonline.net/cck/csi-node-driver-registrar
       pullPolicy: Always
       tag: "v1.2.0"
 
   # Liveness Probe - Node
   eks-disk-liveness-probe:
     image:
-      repository: capitalonline/csi-livenessprobe
+      repository: registry-bj.capitalonline.net/cck/csi-livenessprobe
       pullPolicy: IfNotPresent
       tag: "v2.0.0"

@@ -23,14 +23,14 @@ container:
   # P2P Accelerator registry container
   p2p-accelerator-registry:
     image:
-      repository: capitalonline/p2p-accelerator
+      repository: harbor-dev.yun-paas.com/dev/p2p-accelerator
       pullPolicy: Always
       tag: "v0.4.0"
 
   # P2P Accelerator configuration init container
   p2p-accelerator-configuration:
     image:
-      repository: capitalonline/p2p-accelerator
+      repository: harbor-dev.yun-paas.com/dev/p2p-accelerator
       pullPolicy: Always
       tag: "v0.4.0"
 

@@ -27,7 +27,7 @@ spec:
           - name: COMMAND_TIMEOUT
             value: "5"  # df 等命令的超时时间，防止卡住，默认 5 秒
         name: k8s
-        image: capitalonline/probe-node:v1.0.0
+        image: registry-bj.capitalonline.net/eks/kubeprober/probe-node:v1.0.0 
         command: ["/run-loop.sh"]
         resources:
           requests:
