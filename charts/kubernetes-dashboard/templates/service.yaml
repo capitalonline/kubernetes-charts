@@ -1,0 +1,34 @@
+{{- if .Values.service.create }}
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    k8s-app: kubernetes-dashboard
+  name: kubernetes-dashboard
+  namespace: {{ .Values.namespace.name }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - port: {{ .Values.service.port }}
+      targetPort: {{ .Values.service.targetPort }}
+  selector:
+    k8s-app: kubernetes-dashboard
+{{- end }}
+
+---
+
+{{- if .Values.metricsScraper.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    k8s-app: dashboard-metrics-scraper
+  name: dashboard-metrics-scraper
+  namespace: {{ .Values.namespace.name }}
+spec:
+  ports:
+    - port: {{ .Values.metricsScraper.containerPort }}
+      targetPort: {{ .Values.metricsScraper.containerPort }}
+  selector:
+    k8s-app: dashboard-metrics-scraper
+{{- end }}

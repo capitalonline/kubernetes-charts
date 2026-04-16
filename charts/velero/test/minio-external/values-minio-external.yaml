@@ -1,0 +1,42 @@
+# Velero 使用集群外 MinIO 的 values 覆盖文件
+#
+# 前提：已在集群外机器上通过 docker compose 启动 MinIO
+#       并将下方 MINIO_HOST_IP 替换为该机器的实际 IP
+#
+# 使用方式：
+#   helm install velero ./charts/velero -n velero --create-namespace \
+#     -f charts/velero/test/minio-external/values-minio-external.yaml \
+#     --set backupStorageLocation.config.s3Url="http://<MINIO_HOST_IP>:9000"
+#
+#   helm upgrade velero ./charts/velero -n velero \
+#     -f charts/velero/test/minio-external/values-minio-external.yaml \
+#     --set backupStorageLocation.config.s3Url="http://<MINIO_HOST_IP>:9000"
+
+credentials:
+  useSecret: true
+  name: velero-credentials
+  secretContents:
+    cloud: |
+      [default]
+      aws_access_key_id = minio
+      aws_secret_access_key = minio123
+
+backupStorageLocation:
+  name: default
+  provider: aws
+  default: true
+  bucket: velero
+  prefix: ""
+  accessMode: ReadWrite
+  config:
+    region: minio
+    s3ForcePathStyle: "true"
+    # 替换为运行 MinIO 的机器 IP
+    s3Url: "http://<MINIO_HOST_IP>:9000"
+    publicUrl: ""
+
+volumeSnapshotLocation:
+  name: default
+  provider: aws
+  config:
+    region: minio

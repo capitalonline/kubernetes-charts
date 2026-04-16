@@ -16,7 +16,7 @@ probeAgent:
   
   # Probe agent image configuration
   image:
-    repository: registry-bj.capitalonline.net/eks/kubeprober/probe-agent 
+    repository: registry-cds.yun-paas.com/cds-eks/probe-agent 
     pullPolicy: Always
     tag: "v1.0.0"
   
@@ -75,7 +75,7 @@ probeAgent:
 nsenter:
   # NSEnter image configuration
   image:
-    repository: registry-bj.capitalonline.net/eks/kubeprober/alpine
+    repository: registry-cds.yun-paas.com/cds-eks/alpine
     pullPolicy: Always
     tag: "v3.9"
   

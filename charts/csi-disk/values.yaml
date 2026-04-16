@@ -38,55 +38,55 @@ container:
   # CDS CSI Driver - Controller
   csi-controller-server:
     image:
-      repository: registry-bj.capitalonline.net/eks/cds-csi-driver
+      repository: registry-cds.yun-paas.com/cds-eks/cds-csi-driver
       pullPolicy: Always
       tag: "v1.0.1-eks"
 
   # CSI Provisioner
   csi-provisioner:
     image:
-      repository: registry-bj.capitalonline.net/cck/csi-provisioner
+      repository: registry-cds.yun-paas.com/cds-eks/csi-provisioner
       pullPolicy: IfNotPresent
       tag: "v3.1.0"
 
   # CSI Attacher
   csi-attacher:
     image:
-      repository: registry-bj.capitalonline.net/cck/csi-attacher
+      repository: registry-cds.yun-paas.com/cds-eks/csi-attacher
       pullPolicy: IfNotPresent
       tag: "v4.3.0"
 
   # CSI Resizer
   csi-resizer:
     image:
-      repository: registry-bj.capitalonline.net/cck/csi-resizer
+      repository: registry-cds.yun-paas.com/cds-eks/csi-resizer
       pullPolicy: IfNotPresent
       tag: "v1.9.0"
 
   # Liveness Probe - Controller
   liveness-probe-controller:
     image:
-      repository: registry-bj.capitalonline.net/cck/csi-livenessprobe
+      repository: registry-cds.yun-paas.com/cds-eks/csi-livenessprobe
       pullPolicy: IfNotPresent
       tag: "v2.0.0"
 
   # CDS CSI Driver - Node
   eks-disk-csi-node-server:
     image:
-      repository: registry-bj.capitalonline.net/eks/cds-csi-driver
+      repository: registry-cds.yun-paas.com/cds-eks/cds-csi-driver
       pullPolicy: Always
       tag: "v1.0.1-eks"
 
   # Node Driver Registrar
   eks-disk-driver-registrar:
     image:
-      repository: registry-bj.capitalonline.net/cck/csi-node-driver-registrar
+      repository: registry-cds.yun-paas.com/cds-eks/csi-node-driver-registrar
       pullPolicy: Always
       tag: "v1.2.0"
 
   # Liveness Probe - Node
   eks-disk-liveness-probe:
     image:
-      repository: registry-bj.capitalonline.net/cck/csi-livenessprobe
+      repository: registry-cds.yun-paas.com/cds-eks/csi-livenessprobe
       pullPolicy: IfNotPresent
       tag: "v2.0.0"

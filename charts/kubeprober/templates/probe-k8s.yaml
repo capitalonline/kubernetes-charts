@@ -17,7 +17,7 @@ spec:
           - name: KEEP_COMPLETED_PODS
             value: "3"  # 保留最新的 3 个 Completed Pod
         name: k8s
-        image: registry-bj.capitalonline.net/eks/kubeprober/probe-k8s:v1.0.0
+        image: registry-cds.yun-paas.com/cds-eks/probe-k8s:v1.0.0
         resources:
           requests:
             cpu: 10m
@@ -52,7 +52,7 @@ spec:
     - name: control-plane
       env:
         - name: CHECK_IMAGE
-          value: "registry-bj.capitalonline.net/eks/kubeprober/nginx-unprivileged:1.17.8"
+          value: "registry-cds.yun-paas.com/cds-eks/nginx-unprivileged:1.17.8"
         - name: PRIVATE_DOMAIN
           value: "kubernetes.default"
         - name: DNS_CHECK_NAMESPACE

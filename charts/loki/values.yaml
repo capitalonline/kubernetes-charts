@@ -19,18 +19,18 @@ container:
   # Loki main container
   loki:
     image:
-      repository: registry-bj.capitalonline.net/eks/loki
+      repository: registry-cds.yun-paas.com/cds-eks/loki
       tag: "3.2.0"
   
   # Promtail log collection
   promtail-container:
     image:
-      repository: registry-bj.capitalonline.net/eks/promtail
+      repository: registry-cds.yun-paas.com/cds-eks/promtail
       tag: "3.2.0"
   
   # Kubernetes event exporter
   event-exporter:
     image:
-      repository: registry-bj.capitalonline.net/eks/kubernetes-event-exporter
+      repository: registry-cds.yun-paas.com/cds-eks/kubernetes-event-exporter
       tag: v1.7
 

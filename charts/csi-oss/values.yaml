@@ -25,27 +25,27 @@ container:
   # OSS Server - InitContainer
   install-oss-server:
     image:
-      repository: registry-bj.capitalonline.net/cck/oss-server
+      repository: registry-cds.yun-paas.com/cds-eks/oss-server
       pullPolicy: Always
       tag: "v1.0.1"
 
   # CDS CSI Driver - OSS Node
   oss-csi-node-server:
     image:
-      repository: registry-bj.capitalonline.net/cck/cds-csi-driver
+      repository: registry-cds.yun-paas.com/cds-eks/cds-csi-driver
       pullPolicy: Always
       tag: "v2.1.2"
 
   # Node Driver Registrar
   oss-driver-registrar:
     image:
-      repository: registry-bj.capitalonline.net/cck/csi-node-driver-registrar
+      repository: registry-cds.yun-paas.com/cds-eks/csi-node-driver-registrar
       pullPolicy: Always
       tag: "v2.9.0"
 
   # Liveness Probe - Node
   oss-liveness-probe:
     image:
-      repository: registry-bj.capitalonline.net/cck/csi-livenessprobe
+      repository: registry-cds.yun-paas.com/cds-eks/csi-livenessprobe
       pullPolicy: IfNotPresent
       tag: "v2.11.0"

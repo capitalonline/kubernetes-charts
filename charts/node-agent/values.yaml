@@ -7,7 +7,7 @@
 nodeConfigAgent:
   # DaemonSet配置（硬编码）
   image:
-    repository: registry-bj.capitalonline.net/test/node-agent
+    repository: registry-cds.yun-paas.com/cds-eks/node-agent
     tag: v1.3
     pullPolicy: Always
   
@@ -51,6 +51,6 @@ container:
   # Node Agent main container
   agent:
     image:
-      repository: registry-bj.capitalonline.net/eks/node-agent
+      repository: registry-cds.yun-paas.com/cds-eks/node-agent
       tag: v1.0.0
       pullPolicy: Always

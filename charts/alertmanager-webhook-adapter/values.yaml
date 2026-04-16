@@ -37,6 +37,6 @@ container:
   # Webhook Adapter main container
   webhook:
     image:
-      repository: registry-bj.capitalonline.net/eks/alertmanager-webhook-adapter
+      repository: registry-cds.yun-paas.com/cds-eks/alertmanager-webhook-adapter
       tag: v1.1.7
 

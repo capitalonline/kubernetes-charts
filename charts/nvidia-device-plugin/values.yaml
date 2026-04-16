@@ -4,7 +4,7 @@
 
 # Image configuration
 image:
-  repository: registry-bj.capitalonline.net/eks/k8s-device-plugin
+  repository: registry-cds.yun-paas.com/cds-eks/k8s-device-plugin
   tag: v0.14.0
   pullPolicy: IfNotPresent
 

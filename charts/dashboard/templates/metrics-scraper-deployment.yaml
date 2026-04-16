@@ -1,0 +1,57 @@
+{{- if .Values.metricsScraper.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    k8s-app: dashboard-metrics-scraper
+  name: dashboard-metrics-scraper
+  namespace: {{ .Values.namespace.name }}
+spec:
+  replicas: {{ .Values.metricsScraper.replicaCount }}
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      k8s-app: dashboard-metrics-scraper
+  template:
+    metadata:
+      labels:
+        k8s-app: dashboard-metrics-scraper
+    spec:
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: dashboard-metrics-scraper
+          image: "{{ .Values.metricsScraper.image.registry }}/{{ .Values.metricsScraper.image.image }}:{{ .Values.metricsScraper.image.tag }}"
+          imagePullPolicy: {{ .Values.metricsScraper.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.metricsScraper.containerPort }}
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              scheme: HTTP
+              path: /
+              port: {{ .Values.metricsScraper.containerPort }}
+            initialDelaySeconds: 30
+            timeoutSeconds: 30
+          volumeMounts:
+            - mountPath: /tmp
+              name: tmp-volume
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsUser: 1001
+            runAsGroup: 2001
+      serviceAccountName: {{ .Values.serviceAccount.name }}
+      nodeSelector:
+        {{- range $key, $value := .Values.dashboard.nodeSelector }}
+        {{ $key }}: {{ $value | quote }}
+        {{- end }}
+      tolerations:
+        {{- toYaml .Values.dashboard.tolerations | nindent 8 }}
+      affinity:
+        {{- toYaml .Values.dashboard.affinity | nindent 8 }}
+      volumes:
+        - name: tmp-volume
+          emptyDir: {}
+{{- end }}

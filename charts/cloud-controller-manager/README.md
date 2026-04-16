@@ -13,7 +13,7 @@ The following table lists the configurable parameters of the cloud-controller-ma
 
 | Parameter                     | Description                                      | Default                                    |
 |-------------------------------|--------------------------------------------------|--------------------------------------------|
-| `image.repository`            | Image repository                                 | `registry-bj.capitalonline.net/eks/eks-cloud-controller-manager` |
+| `image.repository`            | Image repository                                 | `registry-cds.yun-paas.com/cds-eks/eks-cloud-controller-manager` |
 | `image.tag`                   | Image tag                                        | `v1.0.8`                                   |
 | `image.pullPolicy`            | Image pull policy                                | `Always`                                   |
 | `serviceAccount.create`       | Specifies whether a service account should be created | `true`                              |

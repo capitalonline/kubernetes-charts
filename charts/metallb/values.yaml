@@ -55,7 +55,7 @@ prometheus:
 
   # the image to be used for the kuberbacproxy container
   rbacProxy:
-    repository: registry-bj.capitalonline.net/metallb/kube-rbac-proxy 
+    repository: registry-cds.yun-paas.com/cds-eks/kube-rbac-proxy 
     tag: v0.12.0
     pullPolicy:
 
@@ -201,7 +201,7 @@ controller:
   # command: /controller
   # webhookMode: enabled
   image:
-    repository: registry-bj.capitalonline.net/metallb/controller 
+    repository: registry-cds.yun-paas.com/cds-eks/controller 
     tag:
     pullPolicy:
   ## @param controller.updateStrategy.type Metallb controller deployment strategy type.
@@ -277,7 +277,7 @@ speaker:
   ignoreExcludeLB: false
 
   image:
-    repository: registry-bj.capitalonline.net/metallb/speaker 
+    repository: registry-cds.yun-paas.com/cds-eks/speaker 
     tag:
     pullPolicy:
   ## @param speaker.updateStrategy.type Speaker daemonset strategy type
@@ -335,7 +335,7 @@ speaker:
   frr:
     enabled: true
     image:
-      repository: registry-bj.capitalonline.net/metallb/frr 
+      repository: registry-cds.yun-paas.com/cds-eks/frr 
       tag: 9.1.0
       pullPolicy:
     metricsPort: 7473

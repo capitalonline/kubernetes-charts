@@ -1,0 +1,117 @@
+# =========================================================
+# Namespace
+# =========================================================
+namespace:
+  create: true
+  name: kubernetes-dashboard
+
+# =========================================================
+# RBAC
+# =========================================================
+rbac:
+  create: true
+  roleName: kubernetes-dashboard
+  clusterRoleName: kubernetes-dashboard
+  roleBindingName: kubernetes-dashboard
+  clusterRoleBindingName: kubernetes-dashboard
+
+# =========================================================
+# ServiceAccount
+# =========================================================
+serviceAccount:
+  create: true
+  name: kubernetes-dashboard
+
+# =========================================================
+# Dashboard
+# =========================================================
+dashboard:
+  replicaCount: 1
+
+  image:
+    registry: registry-cds.yun-paas.com/cds-eks
+    image: eks/dashboard
+    tag: "v2.7.0"
+    pullPolicy: Always
+
+  args:
+    - --tls-cert-file=/tls.crt
+    - --tls-key-file=/tls.key
+    - --namespace=kubernetes-dashboard
+
+  containerPort: 8443
+
+  resources: {}
+
+  nodeSelector:
+    kubernetes.io/os: linux
+
+  tolerations:
+    - key: node-role.kubernetes.io/control-plane
+      effect: NoSchedule
+    - key: node-role.eks.net/infra
+      operator: Exists
+
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: node-role.kubernetes.io/control-plane
+                operator: Exists
+
+# =========================================================
+# Service
+# =========================================================
+service:
+  create: true
+  type: ClusterIP
+  port: 443
+  targetPort: 8443
+
+# =========================================================
+# Ingress
+# =========================================================
+ingress:
+  enabled: true
+  ingressClassName: nginx
+  annotations:
+    nginx.ingress.kubernetes.io/secure-backends: "true"
+    nginx.ingress.kubernetes.io/ssl-passthrough: "false"
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    nginx.ingress.kubernetes.io/backend-protocol: HTTPS
+  hosts:
+    - ""
+  internalHosts:
+    - ""
+  tls:
+    secretName: kubernetes-dashboard-certs
+
+# =========================================================
+# Secrets
+# =========================================================
+secrets:
+  certs:
+    # certs secret is expected to be created externally
+    create: false
+  csrf:
+    create: true
+  keyHolder:
+    create: true
+
+# =========================================================
+# Metrics Scraper
+# =========================================================
+metricsScraper:
+  enabled: true
+  replicaCount: 1
+
+  image:
+    registry: registry-cds.yun-paas.com/cds-eks
+    image: metrics-scraper
+    tag: "v1.0.8"
+    pullPolicy: IfNotPresent
+
+  containerPort: 8000
+
+  resources: {}

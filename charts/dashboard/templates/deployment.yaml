@@ -1,0 +1,64 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    k8s-app: kubernetes-dashboard
+  name: kubernetes-dashboard
+  namespace: {{ .Values.namespace.name }}
+spec:
+  replicas: {{ .Values.dashboard.replicaCount }}
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      k8s-app: kubernetes-dashboard
+  template:
+    metadata:
+      labels:
+        k8s-app: kubernetes-dashboard
+    spec:
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: kubernetes-dashboard
+          image: "{{ .Values.dashboard.image.registry }}/{{ .Values.dashboard.image.image }}:{{ .Values.dashboard.image.tag }}"
+          imagePullPolicy: {{ .Values.dashboard.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.dashboard.containerPort }}
+              protocol: TCP
+          args:
+            {{- range .Values.dashboard.args }}
+            - {{ . }}
+            {{- end }}
+          volumeMounts:
+            - name: kubernetes-dashboard-certs
+              mountPath: /certs
+            - mountPath: /tmp
+              name: tmp-volume
+          livenessProbe:
+            httpGet:
+              scheme: HTTPS
+              path: /
+              port: {{ .Values.dashboard.containerPort }}
+            initialDelaySeconds: 30
+            timeoutSeconds: 30
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsUser: 1001
+            runAsGroup: 2001
+      volumes:
+        - name: kubernetes-dashboard-certs
+          secret:
+            secretName: kubernetes-dashboard-certs
+        - name: tmp-volume
+          emptyDir: {}
+      serviceAccountName: {{ .Values.serviceAccount.name }}
+      nodeSelector:
+        {{- range $key, $value := .Values.dashboard.nodeSelector }}
+        {{ $key }}: {{ $value | quote }}
+        {{- end }}
+      tolerations:
+        {{- toYaml .Values.dashboard.tolerations | nindent 8 }}
+      affinity:
+        {{- toYaml .Values.dashboard.affinity | nindent 8 }}
