@@ -22,6 +22,6 @@ container:
   # CronHPA Controller main container
   cronhpa-controller:
     image:
-      repository: harbor-dev.yun-paas.com/dev/kubernetes-cronhpa-controller
+      repository: registry-cds.yun-paas.com/cds-eks/kubernetes-cronhpa-controller
       pullPolicy: Always
       tag: "v1.0.0"

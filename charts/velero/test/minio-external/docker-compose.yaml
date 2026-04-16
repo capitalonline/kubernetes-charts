@@ -1,6 +1,6 @@
 services:
   minio:
-    image: docker.m.daocloud.io/minio/minio:RELEASE.2024-01-16T16-07-38Z
+    image: registry-cds.yun-paas.com/cds-eks/minio:RELEASE.2024-01-16T16-07-38Z
     container_name: minio
     restart: unless-stopped
     ports:
@@ -21,7 +21,7 @@ services:
 
   # 自动创建 velero bucket，MinIO 就绪后执行一次
   mc:
-    image: docker.m.daocloud.io/minio/mc:latest
+    image: registry-cds.yun-paas.com/cds-eks/mc:latest
     container_name: minio-init
     depends_on:
       minio:

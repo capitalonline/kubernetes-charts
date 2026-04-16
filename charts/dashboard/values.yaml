@@ -30,7 +30,7 @@ dashboard:
 
   image:
     registry: registry-cds.yun-paas.com/cds-eks
-    image: eks/dashboard
+    image: dashboard
     tag: "v2.7.0"
     pullPolicy: Always
 

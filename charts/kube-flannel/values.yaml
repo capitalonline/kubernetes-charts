@@ -99,5 +99,5 @@ netpol:
   - "--hostname-override=$(MY_NODE_NAME)"
   - "--v=2"
   image:
-    repository: registry.k8s.io/networking/kube-network-policies
+    repository: registry-cds.yun-paas.com/cds-eks/kube-network-policies
     tag: v1.0.0

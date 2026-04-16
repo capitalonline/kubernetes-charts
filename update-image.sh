@@ -92,7 +92,7 @@ function print_help() {
 示例:
   # 更新 cronhpa-controller 镜像（Deployment）
   $0 cronhpa-controller -c cronhpa-controller \\
-    -i harbor-dev.yun-paas.com/dev/kubernetes-cronhpa-controller:v1.1.0 \\
+    -i registry-cds.yun-paas.com/cds-eks/kubernetes-cronhpa-controller:v1.1.0 \\
     -n kube-system -k Deployment
 
   # 更新 Prometheus Node Exporter（DaemonSet）
