@@ -23,14 +23,14 @@ container:
   # Velero 主服务镜像
   velero:
     image:
-      repository: velero/velero
+      repository: registry-cds.yun-paas.com/cds-eks/velero
       tag: "v1.18.0"
       pullPolicy: IfNotPresent
 
   # AWS/S3 兼容存储插件镜像（init container）
   velero-plugin-for-aws:
     image:
-      repository: velero/velero-plugin-for-aws
+      repository: registry-cds.yun-paas.com/cds-eks/velero-plugin-for-aws
       tag: "v1.13.0"
       pullPolicy: IfNotPresent
 
