@@ -1,7 +1,7 @@
 # Default values for cloud-controller-manager
 image:
   repository: registry-cds.yun-paas.com/cds-eks/eks-cloud-controller-manager
-  tag: v1.1.0-dev
+  tag: v1.1.0
   pullPolicy: Always
 
 serviceAccount:
