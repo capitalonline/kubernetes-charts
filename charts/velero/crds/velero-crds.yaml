@@ -1,0 +1,789 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: backups.velero.io
+  labels:
+    app.kubernetes.io/name: velero
+    component: velero
+spec:
+  group: velero.io
+  names:
+    kind: Backup
+    listKind: BackupList
+    plural: backups
+    singular: backup
+    categories:
+      - velero
+  scope: Namespaced
+  versions:
+    - name: v1
+      served: true
+      storage: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              x-kubernetes-preserve-unknown-fields: true
+            status:
+              type: object
+              properties:
+                phase:
+                  type: string
+                  description: "Backup phase (New, InProgress, Uploading, Uploading, Completed, PartiallyFailed, Failed, Deleting)"
+                errors:
+                  type: integer
+                  description: "Number of errors encountered during backup"
+                warnings:
+                  type: integer
+                  description: "Number of warnings encountered during backup"
+                startTimestamp:
+                  type: string
+                  format: date-time
+                  description: "Time when the backup started"
+                completionTimestamp:
+                  type: string
+                  format: date-time
+                  description: "Time when the backup completed"
+                expiration:
+                  type: string
+                  format: date-time
+                  description: "Time when the backup expires"
+                version:
+                  type: integer
+                  description: "Backup format version"
+                progress:
+                  type: object
+                  properties:
+                    totalItems:
+                      type: integer
+                    itemsBackedUp:
+                      type: integer
+                  x-kubernetes-preserve-unknown-fields: true
+                validationErrors:
+                  type: array
+                  items:
+                    type: string
+                  nullable: true
+                formatVersion:
+                  type: string
+                csiVolumeSnapshotsAttempted:
+                  type: integer
+                csiVolumeSnapshotsCompleted:
+                  type: integer
+                failureReason:
+                  type: string
+                hookStatus:
+                  type: object
+                  x-kubernetes-preserve-unknown-fields: true
+                backupItemOperationsAttempted:
+                  type: integer
+                backupItemOperationsCompleted:
+                  type: integer
+                backupItemOperationsFailed:
+                  type: integer
+              x-kubernetes-preserve-unknown-fields: true
+      additionalPrinterColumns:
+        - name: STATUS
+          type: string
+          description: Backup status
+          jsonPath: .status.phase
+        - name: ERRORS
+          type: integer
+          description: Number of errors
+          jsonPath: .status.errors
+        - name: WARNINGS
+          type: integer
+          description: Number of warnings
+          jsonPath: .status.warnings
+        - name: CREATED
+          type: date
+          description: Backup start time
+          jsonPath: .status.startTimestamp
+        - name: EXPIRES
+          type: date
+          description: Expiration time
+          jsonPath: .status.expiration
+        - name: STORAGE LOCATION
+          type: string
+          description: Backup storage location
+          jsonPath: .spec.storageLocation
+        - name: AGE
+          type: date
+          jsonPath: .metadata.creationTimestamp
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: backuprepositories.velero.io
+  labels:
+    app.kubernetes.io/name: velero
+    component: velero
+spec:
+  group: velero.io
+  names:
+    kind: BackupRepository
+    listKind: BackupRepositoryList
+    plural: backuprepositories
+    singular: backuprepository
+    categories:
+      - velero
+  scope: Namespaced
+  versions:
+    - name: v1
+      served: true
+      storage: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              x-kubernetes-preserve-unknown-fields: true
+            status:
+              type: object
+              properties:
+                phase:
+                  type: string
+                lastMaintenanceTime:
+                  type: string
+                  format: date-time
+                message:
+                  type: string
+              x-kubernetes-preserve-unknown-fields: true
+      additionalPrinterColumns:
+        - name: AGE
+          type: date
+          jsonPath: .metadata.creationTimestamp
+        - name: READY
+          type: string
+          jsonPath: .status.phase
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: backupstoragelocations.velero.io
+  labels:
+    app.kubernetes.io/name: velero
+    component: velero
+spec:
+  group: velero.io
+  names:
+    kind: BackupStorageLocation
+    listKind: BackupStorageLocationList
+    plural: backupstoragelocations
+    singular: backupstoragelocation
+    shortNames:
+      - bsl
+    categories:
+      - velero
+  scope: Namespaced
+  versions:
+    - name: v1
+      served: true
+      storage: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              x-kubernetes-preserve-unknown-fields: true
+            status:
+              type: object
+              properties:
+                phase:
+                  type: string
+                  description: "BSL phase (Available, Unavailable)"
+                lastValidationTime:
+                  type: string
+                  format: date-time
+                lastSyncedTime:
+                  type: string
+                  format: date-time
+                lastSyncedRevision:
+                  type: string
+                accessMode:
+                  type: string
+                message:
+                  type: string
+              x-kubernetes-preserve-unknown-fields: true
+      additionalPrinterColumns:
+        - name: PHASE
+          type: string
+          description: Connection status
+          jsonPath: .status.phase
+        - name: LAST VALIDATED
+          type: date
+          description: Last validation time
+          jsonPath: .status.lastValidationTime
+        - name: AGE
+          type: date
+          jsonPath: .metadata.creationTimestamp
+        - name: DEFAULT
+          type: boolean
+          jsonPath: .spec.default
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: deletebackuprequests.velero.io
+  labels:
+    app.kubernetes.io/name: velero
+    component: velero
+spec:
+  group: velero.io
+  names:
+    kind: DeleteBackupRequest
+    listKind: DeleteBackupRequestList
+    plural: deletebackuprequests
+    singular: deletebackuprequest
+    categories:
+      - velero
+  scope: Namespaced
+  versions:
+    - name: v1
+      served: true
+      storage: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              x-kubernetes-preserve-unknown-fields: true
+            status:
+              type: object
+              properties:
+                phase:
+                  type: string
+                errors:
+                  type: array
+                  items:
+                    type: string
+                  nullable: true
+              x-kubernetes-preserve-unknown-fields: true
+      additionalPrinterColumns:
+        - name: AGE
+          type: date
+          jsonPath: .metadata.creationTimestamp
+        - name: BACKUP
+          type: string
+          jsonPath: .spec.backupName
+        - name: STATUS
+          type: string
+          jsonPath: .status.phase
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: downloadrequests.velero.io
+  labels:
+    app.kubernetes.io/name: velero
+    component: velero
+spec:
+  group: velero.io
+  names:
+    kind: DownloadRequest
+    listKind: DownloadRequestList
+    plural: downloadrequests
+    singular: downloadrequest
+    categories:
+      - velero
+  scope: Namespaced
+  versions:
+    - name: v1
+      served: true
+      storage: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              x-kubernetes-preserve-unknown-fields: true
+            status:
+              type: object
+              properties:
+                phase:
+                  type: string
+                downloadURL:
+                  type: string
+                expiration:
+                  type: string
+                  format: date-time
+              x-kubernetes-preserve-unknown-fields: true
+      additionalPrinterColumns:
+        - name: AGE
+          type: date
+          jsonPath: .metadata.creationTimestamp
+        - name: STATUS
+          type: string
+          jsonPath: .status.phase
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: podvolumebackups.velero.io
+  labels:
+    app.kubernetes.io/name: velero
+    component: velero
+spec:
+  group: velero.io
+  names:
+    kind: PodVolumeBackup
+    listKind: PodVolumeBackupList
+    plural: podvolumebackups
+    singular: podvolumebackup
+    categories:
+      - velero
+  scope: Namespaced
+  versions:
+    - name: v1
+      served: true
+      storage: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              x-kubernetes-preserve-unknown-fields: true
+            status:
+              type: object
+              properties:
+                phase:
+                  type: string
+                startTimestamp:
+                  type: string
+                  format: date-time
+                completionTimestamp:
+                  type: string
+                  format: date-time
+                progress:
+                  type: object
+                  x-kubernetes-preserve-unknown-fields: true
+                message:
+                  type: string
+                snapshotID:
+                  type: string
+              x-kubernetes-preserve-unknown-fields: true
+      additionalPrinterColumns:
+        - name: AGE
+          type: date
+          jsonPath: .metadata.creationTimestamp
+        - name: STATUS
+          type: string
+          jsonPath: .status.phase
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: podvolumerestores.velero.io
+  labels:
+    app.kubernetes.io/name: velero
+    component: velero
+spec:
+  group: velero.io
+  names:
+    kind: PodVolumeRestore
+    listKind: PodVolumeRestoreList
+    plural: podvolumerestores
+    singular: podvolumerestore
+    categories:
+      - velero
+  scope: Namespaced
+  versions:
+    - name: v1
+      served: true
+      storage: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              x-kubernetes-preserve-unknown-fields: true
+            status:
+              type: object
+              properties:
+                phase:
+                  type: string
+                startTimestamp:
+                  type: string
+                  format: date-time
+                completionTimestamp:
+                  type: string
+                  format: date-time
+                progress:
+                  type: object
+                  x-kubernetes-preserve-unknown-fields: true
+                message:
+                  type: string
+              x-kubernetes-preserve-unknown-fields: true
+      additionalPrinterColumns:
+        - name: AGE
+          type: date
+          jsonPath: .metadata.creationTimestamp
+        - name: STATUS
+          type: string
+          jsonPath: .status.phase
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: restores.velero.io
+  labels:
+    app.kubernetes.io/name: velero
+    component: velero
+spec:
+  group: velero.io
+  names:
+    kind: Restore
+    listKind: RestoreList
+    plural: restores
+    singular: restore
+    categories:
+      - velero
+  scope: Namespaced
+  versions:
+    - name: v1
+      served: true
+      storage: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              x-kubernetes-preserve-unknown-fields: true
+            status:
+              type: object
+              properties:
+                phase:
+                  type: string
+                errors:
+                  type: integer
+                warnings:
+                  type: integer
+                startTimestamp:
+                  type: string
+                  format: date-time
+                completionTimestamp:
+                  type: string
+                  format: date-time
+                validationErrors:
+                  type: array
+                  items:
+                    type: string
+                  nullable: true
+                progress:
+                  type: object
+                  x-kubernetes-preserve-unknown-fields: true
+                failureReason:
+                  type: string
+                restoreItemOperationsAttempted:
+                  type: integer
+                restoreItemOperationsCompleted:
+                  type: integer
+                restoreItemOperationsFailed:
+                  type: integer
+              x-kubernetes-preserve-unknown-fields: true
+      additionalPrinterColumns:
+        - name: BACKUP
+          type: string
+          description: Associated backup name
+          jsonPath: .spec.backupName
+        - name: STATUS
+          type: string
+          description: Restore status
+          jsonPath: .status.phase
+        - name: STARTED
+          type: date
+          description: Start time
+          jsonPath: .status.startTimestamp
+        - name: COMPLETED
+          type: date
+          description: Completion time
+          jsonPath: .status.completionTimestamp
+        - name: ERRORS
+          type: integer
+          description: Number of errors
+          jsonPath: .status.errors
+        - name: WARNINGS
+          type: integer
+          description: Number of warnings
+          jsonPath: .status.warnings
+        - name: AGE
+          type: date
+          jsonPath: .metadata.creationTimestamp
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: schedules.velero.io
+  labels:
+    app.kubernetes.io/name: velero
+    component: velero
+spec:
+  group: velero.io
+  names:
+    kind: Schedule
+    listKind: ScheduleList
+    plural: schedules
+    singular: schedule
+    categories:
+      - velero
+  scope: Namespaced
+  versions:
+    - name: v1
+      served: true
+      storage: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              x-kubernetes-preserve-unknown-fields: true
+            status:
+              type: object
+              properties:
+                phase:
+                  type: string
+                lastBackup:
+                  type: string
+                  format: date-time
+                validationErrors:
+                  type: array
+                  items:
+                    type: string
+                  nullable: true
+              x-kubernetes-preserve-unknown-fields: true
+      additionalPrinterColumns:
+        - name: STATUS
+          type: string
+          description: Schedule status
+          jsonPath: .status.phase
+        - name: SCHEDULE
+          type: string
+          description: Cron expression
+          jsonPath: .spec.schedule
+        - name: BACKUP TTL
+          type: string
+          description: Backup retention time
+          jsonPath: .spec.template.ttl
+        - name: LAST BACKUP
+          type: date
+          description: Last backup time
+          jsonPath: .status.lastBackup
+        - name: AGE
+          type: date
+          jsonPath: .metadata.creationTimestamp
+        - name: PAUSED
+          type: boolean
+          jsonPath: .spec.paused
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: serverstatusrequests.velero.io
+  labels:
+    app.kubernetes.io/name: velero
+    component: velero
+spec:
+  group: velero.io
+  names:
+    kind: ServerStatusRequest
+    listKind: ServerStatusRequestList
+    plural: serverstatusrequests
+    singular: serverstatusrequest
+    shortNames:
+      - ssr
+    categories:
+      - velero
+  scope: Namespaced
+  versions:
+    - name: v1
+      served: true
+      storage: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              x-kubernetes-preserve-unknown-fields: true
+            status:
+              type: object
+              properties:
+                phase:
+                  type: string
+                serverVersion:
+                  type: string
+                plugins:
+                  type: array
+                  items:
+                    type: object
+                    x-kubernetes-preserve-unknown-fields: true
+                  nullable: true
+                processedTimestamp:
+                  type: string
+                  format: date-time
+              x-kubernetes-preserve-unknown-fields: true
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: volumesnapshotlocations.velero.io
+  labels:
+    app.kubernetes.io/name: velero
+    component: velero
+spec:
+  group: velero.io
+  names:
+    kind: VolumeSnapshotLocation
+    listKind: VolumeSnapshotLocationList
+    plural: volumesnapshotlocations
+    singular: volumesnapshotlocation
+    shortNames:
+      - vsl
+    categories:
+      - velero
+  scope: Namespaced
+  versions:
+    - name: v1
+      served: true
+      storage: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              x-kubernetes-preserve-unknown-fields: true
+            status:
+              type: object
+              properties:
+                phase:
+                  type: string
+              x-kubernetes-preserve-unknown-fields: true
+      additionalPrinterColumns:
+        - name: PHASE
+          type: string
+          jsonPath: .status.phase
+        - name: AGE
+          type: date
+          jsonPath: .metadata.creationTimestamp
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: datadownloads.velero.io
+  labels:
+    app.kubernetes.io/name: velero
+    component: velero
+spec:
+  group: velero.io
+  names:
+    kind: DataDownload
+    listKind: DataDownloadList
+    plural: datadownloads
+    singular: datadownload
+    categories:
+      - velero
+  scope: Namespaced
+  versions:
+    - name: v2alpha1
+      served: true
+      storage: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              x-kubernetes-preserve-unknown-fields: true
+            status:
+              type: object
+              properties:
+                phase:
+                  type: string
+                startTimestamp:
+                  type: string
+                  format: date-time
+                completionTimestamp:
+                  type: string
+                  format: date-time
+                progress:
+                  type: object
+                  x-kubernetes-preserve-unknown-fields: true
+                message:
+                  type: string
+                node:
+                  type: string
+              x-kubernetes-preserve-unknown-fields: true
+      additionalPrinterColumns:
+        - name: STATUS
+          type: string
+          jsonPath: .status.phase
+        - name: AGE
+          type: date
+          jsonPath: .metadata.creationTimestamp
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: datauploads.velero.io
+  labels:
+    app.kubernetes.io/name: velero
+    component: velero
+spec:
+  group: velero.io
+  names:
+    kind: DataUpload
+    listKind: DataUploadList
+    plural: datauploads
+    singular: dataupload
+    categories:
+      - velero
+  scope: Namespaced
+  versions:
+    - name: v2alpha1
+      served: true
+      storage: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              x-kubernetes-preserve-unknown-fields: true
+            status:
+              type: object
+              properties:
+                phase:
+                  type: string
+                startTimestamp:
+                  type: string
+                  format: date-time
+                completionTimestamp:
+                  type: string
+                  format: date-time
+                progress:
+                  type: object
+                  x-kubernetes-preserve-unknown-fields: true
+                message:
+                  type: string
+                node:
+                  type: string
+              x-kubernetes-preserve-unknown-fields: true
+      additionalPrinterColumns:
+        - name: STATUS
+          type: string
+          jsonPath: .status.phase
+        - name: AGE
+          type: date
+          jsonPath: .metadata.creationTimestamp
