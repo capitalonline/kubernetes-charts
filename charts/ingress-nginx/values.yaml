@@ -42,7 +42,7 @@ controller:
 
   image:
     registry: capitalonline
-    image: /ingress-nginx-controller
+    image: ingress-nginx-controller
     tag: "v1.7.1"
     pullPolicy: IfNotPresent
 
@@ -84,7 +84,7 @@ controller:
     createSecretJob:
       image:
         registry: capitalonline
-        image: /ingress-nginx-kube-webhook-certgen
+        image: ingress-nginx-kube-webhook-certgen
         tag: v20230312
         pullPolicy: IfNotPresent
 
